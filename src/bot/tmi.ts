@@ -761,12 +761,12 @@ class TMI extends Core {
             userId: Number(sender.userId),
             isOnline: true,
             isVIP: typeof sender.badges.vip !== 'undefined',
-            isFollower: user.isFollower ?? false,
-            isModerator: user.isModerator ?? typeof sender.badges.moderator !== 'undefined',
-            isSubscriber: user.isSubscriber ?? typeof sender.badges.subscriber !== 'undefined',
+            isModerator: typeof sender.badges.moderator !== 'undefined',
+            isSubscriber: user.haveSubscriberLock ? user.isSubscriber : typeof sender.badges.subscriber !== 'undefined',
             messages: user.messages ?? 0,
             subscribeTier: String(typeof sender.badges.subscriber !== 'undefined' ? 0 : user.subscribeTier),
             subscribeCumulativeMonths: subCumulativeMonths(sender) || user.subscribeCumulativeMonths,
+            seenAt: Date.now(),
           });
         } else {
           joinpart.send({ users: [sender.username], type: 'join' });
@@ -777,6 +777,7 @@ class TMI extends Core {
             isVIP: typeof sender.badges.vip !== 'undefined',
             isModerator: typeof sender.badges.moderator !== 'undefined',
             isSubscriber: typeof sender.badges.subscriber !== 'undefined',
+            seenAt: Date.now(),
           });
         }
 
