@@ -13,7 +13,7 @@ sogebot.db*
 restart.pid
 .env
 
-public/dist/*
+
 public/custom/*
 public/dist/css
 public/dist/js
