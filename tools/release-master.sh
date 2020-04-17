@@ -1,6 +1,6 @@
 rm master.zip;
 rm -rf sogeBot-master;
-wget https://github.com/sogehige/sogeBot/archive/master.zip;
+wget https://github.com/asosgaming/sogeBot/archive/master.zip;
 unzip master.zip;
 cd sogeBot-master;
 HUSKY_SKIP_INSTALL=1 make;
