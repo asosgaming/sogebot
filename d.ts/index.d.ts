@@ -143,17 +143,18 @@ interface UIHighlightsUrlGenerator {
 }
 
 interface CommandResponse {
-  response: string;
-  sender: UserStateTags & { userId: number } & {
-    discord?: { author: DiscordJsUser; channel: DiscordJsTextChannel };
-  };
+  response: string | Promise<string>;
+  sender: CommandOptions['sender'];
   attr: CommandOptions['attr'];
 }
 
 interface CommandOptions {
-  sender: UserStateTags & { userId: number };
+  sender: UserStateTags & { userId: number } & {
+    discord?: { author: DiscordJsUser; channel: DiscordJsTextChannel };
+  };
   command: string;
   parameters: string;
+  createdAt: number;
   attr: {
     skip?: boolean;
     quiet?: boolean;
