@@ -5,7 +5,7 @@ import _ from 'lodash';
 import SpotifyWebApi from 'spotify-web-api-node';
 import { isMainThread } from '../cluster';
 
-import { prepare, sendMessage } from '../commons';
+import { prepare } from '../commons';
 import { command, default_permission, settings, shared, ui } from '../decorators';
 import { onChange, onStartup } from '../decorators/on';
 import Expects from '../expects';
@@ -500,12 +500,12 @@ class Spotify extends Integration {
 
   @command('!spotify')
   @default_permission(null)
-  async main (opts: CommandOptions) {
+  async main (opts: CommandOptions): Promise<CommandResponse[]> {
     if (!(api.isStreamOnline)) {
-      return;
+      return [];
     } // don't do anything on offline stream
     if (!this.songRequests) {
-      return;
+      return [];
     }
 
     try {
@@ -534,10 +534,6 @@ class Spotify extends Integration {
           },
         });
         const track = response.data;
-        sendMessage(
-          prepare('integrations.spotify.song-requested', {
-            name: track.name, artist: track.artists[0].name, artists: track.artists.map(o => o.name).join(', '),
-          }), opts.sender);
         this.uris.push({
           uri: 'spotify:track:' + id,
           requestBy: opts.sender.username,
@@ -545,6 +541,9 @@ class Spotify extends Integration {
           artist: track.artists[0].name,
           artists: track.artists.map(o => o.name).join(', '),
         });
+        return [{ response: prepare('integrations.spotify.song-requested', {
+          name: track.name, artist: track.artists[0].name, artists: track.artists.map(o => o.name).join(', '),
+        }), ...opts }];
       } else {
         const response = await axios({
           method: 'get',
@@ -555,10 +554,6 @@ class Spotify extends Integration {
           },
         });
         const track = response.data.tracks.items[0];
-        sendMessage(
-          prepare('integrations.spotify.song-requested', {
-            name: track.name, artist: track.artists[0].name,
-          }), opts.sender);
         this.uris.push({
           uri: track.uri,
           requestBy: opts.sender.username,
@@ -566,10 +561,12 @@ class Spotify extends Integration {
           artist: track.artists[0].name,
           artists: track.artists.map(o => o.name).join(', '),
         });
+        return [{ response: prepare('integrations.spotify.song-requested', {
+          name: track.name, artist: track.artists[0].name,
+        }), ...opts }];
       }
     } catch (e) {
-      sendMessage(
-        prepare('integrations.spotify.song-not-found'), opts.sender);
+      return [{ response: prepare('integrations.spotify.song-not-found'), ...opts }];
     }
   }
 }

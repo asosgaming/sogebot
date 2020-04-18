@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import * as constants from './constants';
-import { sendMessage } from './commons';
+import { getBotSender, sendMessage } from './commons';
 import { debug, error, warning } from './helpers/log';
 import { incrementCountOfCommandUsage } from './helpers/commands/count';
 import { getRepository } from 'typeorm';
@@ -14,13 +14,12 @@ import { translate } from './translate';
 import currency from './currency';
 import general from './general';
 import tmi from './tmi';
-import { UserStateTags } from 'twitch-js';
 import { list } from './helpers/register';
 
 class Parser {
   started_at = Date.now();
   message = '';
-  sender: Partial<UserStateTags> | null = null;
+  sender: CommandOptions['sender'] | null = null;
   skip = false;
   quiet = false;
   successfullParserRuns: any[] = [];
@@ -136,8 +135,17 @@ class Parser {
         debug('parser.process', 'Skipped ' + parser.name + ' (fireAndForget: ' + parser.fireAndForget + ')');
       }
     }
+
     if (this.isCommand) {
-      this.command(this.sender, this.message.trim());
+      this.command(this.sender, this.message.trim()).then(responses => {
+        if (responses) {
+          for (let i = 0; i < responses.length; i++) {
+            setTimeout(() => {
+              sendMessage(responses[i].response, responses[i].sender, responses[i].attr);
+            }, 500 * i);
+          }
+        }
+      });
     }
   }
 
@@ -238,19 +246,19 @@ class Parser {
     return commands;
   }
 
-  async command (sender, message) {
+  async command (sender: CommandOptions['sender'] | null, message: string): Promise<CommandResponse[]> {
     debug('parser.command', { sender, message });
     if (!message.startsWith('!')) {
-      return;
+      return [];
     }; // do nothing, this is not a command or user is ignored
     const command = await this.find(message, null);
     debug('parser.command', { command });
     if (_.isNil(command)) {
-      return;
+      return [];
     }; // command not found, do nothing
     if (command.permission === null) {
       warning(`Command ${command.command} is disabled!`);
-      return;
+      return [];
     }; // command is disabled
 
     if (this.sender) {
@@ -265,10 +273,11 @@ class Parser {
       || getFromViewersCache(this.sender.userId, command.permission)
     ) {
       const text = message.trim().replace(new RegExp('^(' + command.command + ')', 'i'), '').trim();
-      const opts = {
-        sender: sender,
+      const opts: CommandOptions = {
+        sender: sender || getBotSender(),
         command: command.command,
         parameters: text.trim(),
+        createdAt: this.started_at,
         attr: {
           skip: this.skip,
           quiet: this.quiet,
@@ -282,15 +291,12 @@ class Parser {
       if (typeof command.fnc === 'function' && !_.isNil(command.id)) {
         incrementCountOfCommandUsage(command.command);
         debug('parser.command', 'Running ' + command.command);
-        command.fnc.apply(command.this, [opts]);
+        return command.fnc.apply(command.this, [opts]) as CommandResponse[];
       } else {
         error(command.command + ' have wrong undefined function ' + command._fncName + '() registered!');
+        return [];
       };
     } else {
-      // user doesn't have permissions for command
-      sender['message-type'] = 'whisper';
-      sendMessage(translate('permissions.without-permission').replace(/\$command/g, message), sender, {});
-
       // do all rollbacks when permission failed
       const rollbacks = await this.rollbacks();
       for (const r of rollbacks) {
@@ -306,6 +312,13 @@ class Parser {
           debug('parser.process', 'Rollback skipped for ' + r.name);
         }
       }
+
+      // user doesn't have permissions for command
+      if (sender) {
+        sender['message-type'] = 'whisper';
+        return[{ response: translate('permissions.without-permission').replace(/\$command/g, message), sender, attr: {} }];
+      }
+      return [];
     }
   }
 }

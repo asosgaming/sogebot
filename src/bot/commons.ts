@@ -4,7 +4,7 @@ import moment from 'moment';
 import 'moment-precise-range-plugin';
 import { join, normalize } from 'path';
 
-import { debug } from './helpers/log';
+import { chatOut, debug } from './helpers/log';
 import { globalIgnoreList } from './data/globalIgnoreList';
 import { error } from './helpers/log';
 import { clusteredChatOut, clusteredClientChat, clusteredClientTimeout, clusteredWhisperOut } from './cluster';
@@ -14,6 +14,34 @@ import oauth from './oauth';
 import { translate } from './translate';
 import tmi from './tmi';
 import { UserStateTags } from 'twitch-js';
+import Discord from './integrations/discord';
+import { TextChannel } from 'discord.js';
+
+export function announce(message: string) {
+  sendMessage(message, {
+    username: oauth.botUsername,
+    displayName: oauth.botUsername,
+    userId: Number(oauth.botId),
+    emotes: [],
+    badges: {},
+    'message-type': 'chat',
+  }, { force: true });
+
+  if (Discord.sendGeneralAnnounceToChannel.length > 0 && Discord.client) {
+    // search discord channel by ID
+    for (const [ id, channel ] of Discord.client.channels.cache) {
+      if (channel.type === 'text') {
+        if (id === Discord.sendGeneralAnnounceToChannel || (channel as TextChannel).name === Discord.sendGeneralAnnounceToChannel) {
+          const ch = Discord.client.channels.cache.find(ch => ch.id === id);
+          if (ch) {
+            (ch as TextChannel).send(message);
+            chatOut(`#${(ch as TextChannel).name}: ${message} [${Discord.client.user?.tag}]`);
+          }
+        }
+      }
+    }
+  }
+}
 
 export async function autoLoad(directory): Promise<{ [x: string]: any }> {
   const directoryListing = readdirSync(directory);
@@ -197,11 +225,10 @@ export async function timeout(username, reason, timeMs) {
   clusteredClientTimeout(username, timeMs, reason);
 }
 
-export function getOwnerAsSender(): Readonly<UserStateTags> {
+export function getOwnerAsSender(): Readonly<UserStateTags & { userId: number }> {
   return {
     username: getOwner(),
     displayName: getOwner(),
-    userId: 0,
     emotes: [],
     badges: {
       subscriber: 1,
@@ -210,6 +237,7 @@ export function getOwnerAsSender(): Readonly<UserStateTags> {
     color: '#000000',
     userType: 'empty',
     emoteSets: [],
+    userId: Number(oauth.channelId),
   };
 }
 
@@ -239,7 +267,7 @@ export function getBotID() {
     return 0;
   }
 }
-export function getBotSender(): Readonly<UserStateTags> {
+export function getBotSender(): Readonly<CommandOptions['sender']> {
   return {
     username: getBot(),
     displayName: getBot(),
