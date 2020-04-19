@@ -62,7 +62,7 @@ class FightMe extends Game {
 
       challenger = await getRepository(User).findOne({ where: { userId: opts.sender.userId }});
       if (!challenger) {
-        // if we still doesn't have user, we create new
+        // if we still don't have user, we create new
         await getRepository(User).save({
           userId: opts.sender.userId, usenrame: opts.sender.username.toLowerCase(),
         });
@@ -106,18 +106,9 @@ class FightMe extends Game {
 
       // mod vs mod
       if (isMod.user && isMod.sender) {
-<<<<<<< HEAD
-        sendMessage(
-          prepare('gambling.fightme.bothModerators', { challenger: user.username }),
-          opts.sender);
-        fightMeChallenges = fightMeChallenges.filter(ch => {
-          return !(ch.opponent === opts.sender.username
-            && ch.challenger === user.username);
-=======
         fightMeChallenges = fightMeChallenges.filter(challenge => {
           return !(challenge.opponent === opts.sender.username
             && challenge.challenger === user.username);
->>>>>>> discordIntergration
         });
         return [{ response: await prepare('gambling.fightme.bothModerators', { challenger: user.username }), ...opts }];
       }
@@ -140,20 +131,9 @@ class FightMe extends Game {
       await points.decrement({ userId: !winner ? opts.sender.userId : user.userId }, Math.abs(Number(loserWillLose)));
 
       timeout(winner ? opts.sender.username : user.username, null, this.timeout);
-<<<<<<< HEAD
-      sendMessage(prepare('gambling.fightme.winner', {
-        username: user.username,
-        winner: winner ? user.username : opts.sender.username,
-        loser: winner ? opts.sender.username : user.username,
-      }), opts.sender, opts.attr);
-      fightMeChallenges = fightMeChallenges.filter(ch => {
-        return !(ch.opponent === opts.sender.username
-          && ch.challenger === user.username);
-=======
       fightMeChallenges = fightMeChallenges.filter(challenge => {
         return !(challenge.opponent === opts.sender.username
           && challenge.challenger === user.username);
->>>>>>> discordIntergration
       });
       return [{ response: await prepare('gambling.fightme.winner', {
         username: user.username,
