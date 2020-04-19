@@ -53,6 +53,7 @@
     "popper.js": "1.16.1",
     "reflect-metadata": "0.1.13",
     "request": "2.88.2",
+    "rxjs": "6.5.5",
     "safe-eval": "0.4.1",
     "socket.io": "2.3.0",
     "socket.io-client": "2.3.0",
@@ -94,6 +95,7 @@
     "cleanup": "node ./tools/cleanup.js || true"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "5.13.0",
     "@fortawesome/fontawesome-svg-core": "1.2.28",
     "@fortawesome/free-brands-svg-icons": "5.13.0",
     "@fortawesome/free-regular-svg-icons": "5.13.0",
@@ -171,7 +173,6 @@
     "file-loader": "6.0.0",
     "gsap": "3.2.6",
     "html-webpack-plugin": "4.0.4",
-    "husky": "4.2.3",
     "image-webpack-loader": "6.0.0",
     "jsonlint-mod": "1.7.5",
     "lint-staged": "10.1.2",
@@ -219,7 +220,6 @@
     "vue2-perfect-scrollbar": "1.4.0",
     "vuelidate": "0.7.5",
     "vuelidate-property-decorators": "1.0.28",
-    "webpack": "5.0.0-beta.14",
     "webpack-bundle-analyzer": "3.6.1",
     "webpack-cli": "3.3.11",
     "weekstart": "1.0.1",
