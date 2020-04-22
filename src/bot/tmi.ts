@@ -130,7 +130,7 @@ class TMI extends Core {
         token,
         username,
         log,
-        onAuthenticationFailure: () => oauth.refreshAccessToken(type).then(refresh_token => refresh_token),
+        onAuthenticationFailure: () => oauth.refreshAccessToken(type).then(token => token),
       });
       this.loadListeners(type);
       await (this.client[type] as TwitchJs).chat.connect();
@@ -163,7 +163,7 @@ class TMI extends Core {
         info(`TMI: ${type} is reconnecting`);
 
         await this.client[type]?.chat.part(this.channel);
-        await this.client[type]?.chat.reconnect({ token, username, onAuthenticationFailure: () => oauth.refreshAccessToken(type).then(refresh_token => refresh_token) });
+        await this.client[type]?.chat.reconnect({ token, username, onAuthenticationFailure: () => oauth.refreshAccessToken(type).then(token => token) });
 
         await this.join(type, channel);
       }
@@ -211,8 +211,6 @@ class TMI extends Core {
   }
 
   loadListeners (type: 'bot' | 'broadcaster') {
-    (this.client[type] as TwitchJs).chat.removeAllListeners();
-
     // common for bot and broadcaster
     (this.client[type] as TwitchJs).chat.on('DISCONNECT', async (message) => {
       info(`TMI: ${type} is disconnected`);
@@ -763,12 +761,12 @@ class TMI extends Core {
             userId: Number(sender.userId),
             isOnline: true,
             isVIP: typeof sender.badges.vip !== 'undefined',
-            isModerator: typeof sender.badges.moderator !== 'undefined',
-            isSubscriber: user.haveSubscriberLock ? user.isSubscriber : typeof sender.badges.subscriber !== 'undefined',
+            isFollower: user.isFollower ?? false,
+            isModerator: user.isModerator ?? typeof sender.badges.moderator !== 'undefined',
+            isSubscriber: user.isSubscriber ?? typeof sender.badges.subscriber !== 'undefined',
             messages: user.messages ?? 0,
             subscribeTier: String(typeof sender.badges.subscriber !== 'undefined' ? 0 : user.subscribeTier),
             subscribeCumulativeMonths: subCumulativeMonths(sender) || user.subscribeCumulativeMonths,
-            seenAt: Date.now(),
           });
         } else {
           joinpart.send({ users: [sender.username], type: 'join' });
@@ -779,7 +777,6 @@ class TMI extends Core {
             isVIP: typeof sender.badges.vip !== 'undefined',
             isModerator: typeof sender.badges.moderator !== 'undefined',
             isSubscriber: typeof sender.badges.subscriber !== 'undefined',
-            seenAt: Date.now(),
           });
         }
 

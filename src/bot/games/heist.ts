@@ -12,10 +12,10 @@ import { User } from '../database/entity/user';
 import { HeistUser } from '../database/entity/heist';
 import { translate } from '../translate';
 import tmi from '../tmi';
-import { default as pointsSystem } from '../systems/points';
+import points from '../systems/points';
 
 class Heist extends Game {
-  dependsOn = [ pointsSystem ];
+  dependsOn = [ points ];
 
   @shared()
   startedAt: null | number = null;
@@ -237,9 +237,9 @@ class Heist extends Game {
       return [{ response: translate('games.heist.lateEntryMessage').replace('$command', opts.command), ...opts }];
     }
 
-    let points: number | string = 0;
+    let points;
     try {
-      points = new Expects(opts.parameters).points().toArray()[0] as (number | string);
+      points = new Expects(opts.parameters).points().toArray()[0];
     } catch (e) {
       if (!newHeist) {
         warning(`${opts.command} ${e.message}`);
@@ -248,16 +248,16 @@ class Heist extends Game {
       return [];
     }
 
-    points = points === 'all' && !_.isNil(await pointsSystem.getPointsOf(opts.sender.userId)) ? await pointsSystem.getPointsOf(opts.sender.userId) : Number(points); // set all points
-    points = points > await pointsSystem.getPointsOf(opts.sender.userId) ? await pointsSystem.getPointsOf(opts.sender.userId) : points; // bet only user points
+    points = points === 'all' && !_.isNil(await points.getPointsOf(opts.sender.userId)) ? await points.getPointsOf(opts.sender.userId) : parseInt(points, 10); // set all points
+    points = points > await points.getPointsOf(opts.sender.userId) ? await points.getPointsOf(opts.sender.userId) : points; // bet only user points
 
     if (points === 0 || _.isNil(points) || _.isNaN(points)) {
       return [{ response: translate('games.heist.entryInstruction').replace('$command', opts.command), ...opts }];
     } // send entryInstruction if command is not ok
 
     await Promise.all([
-      pointsSystem.decrement({ userId: opts.sender.userId }, Number(points)),
-      getRepository(HeistUser).save({ userId: opts.sender.userId, username: opts.sender.username, points: Number(points)}), // add user to heist list
+      points.decrement({ userId: opts.sender.userId }, parseInt(points, 10)),
+      getRepository(HeistUser).save({ userId: opts.sender.userId, username: opts.sender.username, points: parseInt(points, 10)}), // add user to heist list
     ]);
 
     // check how many users are in heist

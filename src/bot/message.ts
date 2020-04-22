@@ -408,8 +408,9 @@ class Message {
     };
     const price = {
       '(price)': async function (filter) {
-        const cmd = await getRepository(Price).findOne({ command: attr.cmd, enabled: true });
-        return [price, await points.getPointsName(cmd?.price ?? 0)].join(' ');
+        const command = await getRepository(Price).findOne({ command: attr.cmd, enabled: true });
+        const price = command?.price ?? 0;
+        return [price, await points.getPointsName(price)].join(' ');
       },
     };
     const online = {

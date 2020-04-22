@@ -26,7 +26,7 @@ import { addUIError } from '../panel';
 let _spotify: any = null;
 
 class Spotify extends Integration {
-  client: null | SpotifyWebApi = null;
+  client: any = null;
   retry: { IRefreshToken: number } = { IRefreshToken: 0 };
   uris: {
     uri: string;
@@ -41,6 +41,8 @@ class Spotify extends Integration {
   state: any = null;
   @shared()
   userId: string | null = null;
+  @shared()
+  playlistId: string | null = null;
   @shared()
   currentSong: string = JSON.stringify({});
 
@@ -133,7 +135,7 @@ class Spotify extends Integration {
 
   @command('!spotify skip')
   @default_permission(null)
-  cSkipSong() {
+  cSkipSong(opts) {
     this.skipToNextSong = true;
   }
 
@@ -166,7 +168,7 @@ class Spotify extends Integration {
     }
   }
 
-  async playNextSongFromPlaylist(retries = 0) {
+  async playNextSongFromPlaylist() {
     try {
       // play from playlist
       const offset = this.originalUri ? { uri: this.originalUri } : undefined;
@@ -192,21 +194,11 @@ class Spotify extends Integration {
       });
       this.currentUris = null;
     } catch (e) {
-      if (this.originalUri) {
-        warning('Cannot continue playlist from ' + String(this.originalUri));
-        warning('Playlist will continue from random track');
-      } else {
-        if (retries < 5) {
-          warning(`Cannot continue playlist from random song. Retry ${retries + 1} of 5 in 5 seconds.`);
-          setTimeout(() => {
-            this.playNextSongFromPlaylist(retries++);
-          }, 5000);
-        } else {
-          warning(`Cannot continue playlist from random song. Retries limit reached.`);
-          error(e.stack);
-        }
-      }
+      warning('Cannot continue playlist from ' + String(this.originalUri));
+      warning('Playlist will continue from random track');
       this.originalUri = null;
+    } finally {
+
     }
   }
 
@@ -289,13 +281,7 @@ class Spotify extends Integration {
       if (!this.fetchCurrentSongWhenOffline && !(api.isStreamOnline)) {
         throw Error('Stream is offline');
       }
-      if (this.client === null) {
-        throw Error('Spotify Web Api not connected');
-      }
       const data = await this.client.getMyCurrentPlayingTrack();
-      if (data.body.item === null) {
-        throw Error('No song was received from spotify');
-      }
 
       let currentSong = JSON.parse(this.currentSong);
       if (typeof currentSong.song === 'undefined' || currentSong.song !== data.body.item.name) {
@@ -352,22 +338,18 @@ class Spotify extends Integration {
     adminEndpoint(this.nsp, 'code', async (token, callback) => {
       const waitForUsername = () => {
         return new Promise((resolve, reject) => {
-          const check = async () => {
-            if (this.client) {
-              this.client.getMe()
-                .then((data) => {
-                  this.username = data.body.display_name ? data.body.display_name : data.body.id;
-                  resolve();
-                }, () => {
-                  global.setTimeout(() => {
-                    check();
-                  }, 1000);
-                });
-            } else {
-              resolve();
-            }
+          const check = async (resolve) => {
+            this.client.getMe()
+              .then((data) => {
+                this.username = data.body.display_name ? data.body.display_name : data.body.id;
+                resolve();
+              }, () => {
+                global.setTimeout(() => {
+                  check(resolve);
+                }, 1000);
+              });
           };
-          check();
+          check(resolve);
         });
       };
 
@@ -378,27 +360,20 @@ class Spotify extends Integration {
     });
     adminEndpoint(this.nsp, 'revoke', async (cb) => {
       clearTimeout(this.timeouts.IRefreshToken);
-      try {
-        if (this.client !== null) {
-          this.client.resetAccessToken();
-          this.client.resetRefreshToken();
-        }
 
-        const username = this.username;
-        this.userId = null;
-        this._accessToken = null;
-        this._refreshToken = null;
-        this.username = '';
-        this.currentSong = JSON.stringify({});
+      const username = this.username;
+      this.client.resetAccessToken();
+      this.client.resetRefreshToken();
+      this.userId = null;
+      this._accessToken = null;
+      this._refreshToken = null;
+      this.username = '';
+      this.currentSong = JSON.stringify({});
 
-        info(chalk.yellow('SPOTIFY: ') + `Access to account ${username} is revoked`);
+      info(chalk.yellow('SPOTIFY: ') + `Access to account ${username} is revoked`);
 
-        cb(null, { do: 'refresh' });
-      } catch (e) {
-        cb(e.stack);
-      } finally {
-        this.timeouts.IRefreshToken = global.setTimeout(() => this.IRefreshToken(), 60000);
-      }
+      this.timeouts.IRefreshToken = global.setTimeout(() => this.IRefreshToken(), 60000);
+      cb(null, { do: 'refresh' });
     });
     adminEndpoint(this.nsp, 'authorize', async (cb) => {
       if (
@@ -459,13 +434,11 @@ class Spotify extends Integration {
               this._accessToken = data.body.access_token;
               this._refreshToken = data.body.refresh_token;
 
-              if (this.client) {
-                this.client.setAccessToken(this._accessToken);
-                this.client.setRefreshToken(this._refreshToken);
-              }
+              this.client.setAccessToken(this._accessToken);
+              this.client.setRefreshToken(this._refreshToken);
               this.retry.IRefreshToken = 0;
-            }, (authorizationError) => {
-              if (authorizationError) {
+            }, (err) => {
+              if (err) {
                 addUIError({ name: 'SPOTIFY', message: 'Getting of accessToken and refreshToken failed.' });
                 info(chalk.yellow('SPOTIFY: ') + 'Getting of accessToken and refreshToken failed');
               }
