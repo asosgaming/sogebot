@@ -46,12 +46,27 @@ export const currentStreamTags: {
 }[] = [];
 
 let intervals = 0;
-const isAPIFree = (intervals) => {
-  for (const key of Object.keys(intervals)) {
-    if (intervals[key].inProgress) {
+let lastIsAPIFreeKey = '__unset__';
+let lastIsAPIFreeKeyStart = Date.now();
+
+const isAPIFree = (intervalList) => {
+  for (const key of Object.keys(intervalList)) {
+    if (intervalList[key].inProgress) {
+      if (lastIsAPIFreeKey !== key) {
+        lastIsAPIFreeKey = key;
+        lastIsAPIFreeKeyStart = Date.now();
+      }
+
+      if (Date.now() - lastIsAPIFreeKeyStart > 10 * constants.MINUTE) {
+        warning(`API call for ${key} is probably frozen (took more than 10minutes), forcefully unblocking`);
+        intervalList[key].inProgress = false;
+        lastIsAPIFreeKey = '__unset__';
+        return true;
+      }
       return false;
     }
   }
+  lastIsAPIFreeKey = '__unset__';
   return true;
 };
 
@@ -1585,7 +1600,7 @@ class API extends Core {
       let logError;
       try {
         logError = e.response.data.status !== 422;
-      } catch (e) {
+      } catch (e2) {
         logError = true;
       }
 

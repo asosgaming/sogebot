@@ -128,21 +128,21 @@ class Module {
     const load = () => {
       if (isDbConnected) {
         setTimeout(async () => {
-          let enabled = true;
-          if (this._name !== 'core') {
-            enabled = await this.loadVariableValue('enabled');
-          }
-          const onStartup = () => {
+          const state = this._name === 'core' ? true : await this.loadVariableValue('enabled');
+          const onStartup = async () => {
             if (loadingInProgress.length > 0) {
               // wait until all settings are loaded
               return setTimeout(() => onStartup(), 100);
             }
-            this._enabled = typeof enabled === 'undefined' ? this._enabled : enabled;
+            if (this._enabled !== null) {
+              // change only if we can enable/disable
+              this._enabled = typeof state === 'undefined' ? this._enabled : state;
+            }
             this.status({ state: this._enabled, quiet: !isMainThread });
             if (isMainThread) {
               const path = this._name === 'core' ? this.__moduleName__.toLowerCase() : `${this._name}.${this.__moduleName__.toLowerCase()}`;
               for (const event of getFunctionList('startup', path)) {
-                this[event.fName]('enabled', enabled);
+                this[event.fName]('enabled', state);
               }
             };
             this.onStartupTriggered = true;
@@ -289,7 +289,7 @@ class Module {
 
           const toRemove: string[] = [];
           for (const possibleVariable of o.split('.')) {
-            const isVariableFound = this.settingsList.find(o => possibleVariable === o.key);
+            const isVariableFound = this.settingsList.find(o2 => possibleVariable === o2.key);
             if (isVariableFound) {
               return {
                 key: o,
@@ -313,21 +313,21 @@ class Module {
           }
 
           const joinedToRemove = toRemove.join('.');
-          for (const key of Object.keys(data)) {
+          for (const key2 of Object.keys(data)) {
             if (joinedToRemove.length > 0) {
-              const value = data[key];
-              data[key.replace(joinedToRemove + '.', '')] = value;
+              const value = data[key2];
+              data[key2.replace(joinedToRemove + '.', '')] = value;
 
-              if (key.replace(joinedToRemove + '.', '') !== key) {
-                delete data[key];
+              if (key2.replace(joinedToRemove + '.', '') !== key2) {
+                delete data[key2];
               }
             }
           }
         }
         try {
           for (const [key, value] of Object.entries(unflatten(data))) {
-            if (key === 'enabled' && ['core', 'overlays', 'widgets'].includes(this._name)) {
-              // ignore enabled if its core, overlay or widgets (we don't want them to be disabled)
+            if (key === 'enabled' && this._enabled === null) {
+              // ignore enabled if we don't want to enable/disable at will
               continue;
             } else if (key === '_permissions') {
               for (const [command, currentValue] of Object.entries(value as any)) {
@@ -512,6 +512,7 @@ class Module {
 
     // add status info
     promisedSettings.enabled = this._enabled;
+
     return promisedSettings;
   }
 

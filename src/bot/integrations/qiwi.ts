@@ -67,26 +67,9 @@ class Qiwi extends Integration {
       const message = DONATION_MESSAGE ? DONATION_MESSAGE : '';
       const amount = Number(DONATION_AMOUNT);
 
-      const getUser = async (username, id) => {
-        const userByUsername = await getRepository(User).findOne({ where: { username: username.toLowerCase() }});
-        if (userByUsername) {
-          return userByUsername;
-        }
-
-        const user = await getRepository(User).findOne({ where: { userId: id }});
-        if (user) {
-          return user;
-        } else {
-          return getRepository(User).save({
-            userId: Number(id),
-            username: username.toLowerCase(),
-          });
-        }
-      };
-
       let id: number | null = null;
       if (username) {
-        const user = await getUser(username, await users.getIdByName(username.toLowerCase()));
+        const user = await users.getUserByUsername(username);
         id = user.userId;
         const newTip: UserTipInterface = {
           amount: Number(amount),
@@ -119,7 +102,7 @@ class Qiwi extends Integration {
       events.fire('tip', {
         username: username || 'Anonymous',
         amount,
-        currency,
+        currency: DONATION_CURRENCY,
         amountInBotCurrency: Number(currency.exchange(amount, DONATION_CURRENCY, currency.mainCurrency)).toFixed(2),
         currencyInBot: currency.mainCurrency,
         message,
