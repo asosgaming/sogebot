@@ -9,6 +9,8 @@
     "sendGeneralAnnounceToChannel": "Allgemeine Benachrichtigung in folgendem Channel (#name oder id)",
     "deleteMessagesAfterWhile": "Nach einiger Zeit, Nachrichten löschen",
     "clientId": "Client ID",
-    "token": "Token"
+    "token": "Token",
+    "joinToServerBtn": "Hier klicken, um den Bot mit dem Server zu verbinden",
+    "cannotJoinToServerBtn": "Token und Client-Id angeben, damit der Bot sich mit dem Server verbinden kann"
   }
 }

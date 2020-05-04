@@ -49,7 +49,14 @@ class Discord extends Integration {
     if: () => self.clientId.length > 0 && self.token.length > 0,
     emit: 'authorize',
   }, 'general')
-  authorizeBtn = null;
+  joinToServerBtn = null;
+
+  @ui({
+    type: 'btn-emit',
+    class: 'btn btn-primary btn-block mt-1 mb-1',
+    if: () => self.clientId.length === 0 || self.token.length === 0,
+  }, 'general')
+  cannotJoinToServerBtn = null;
 
   @settings('bot')
   listenAtChannels = '';
@@ -165,6 +172,7 @@ class Discord extends Integration {
         { name: 'Total Views', value: api.stats.currentViews, inline: true},
         { name: 'Followers', value: api.stats.currentFollowers, inline: true},
       ]);
+      this.embed.setImage(`https://static-cdn.jtvnw.net/ttv-static/404_preview-1920x1080.jpg?${Date.now()}`);
 
       if (oauth.broadcasterType !== '') {
         this.embed.addField('Subscribers', api.stats.currentSubscribers, true);
