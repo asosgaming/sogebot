@@ -20,3 +20,14 @@ public/dist/js
 public/dist/css/dark.css
 public/dist/css/light.css
 public/*.html
+
+###### Developer Tools 4 May 2020 1145
+# Studio Code
+workspace.code-workspace
+# Bash Scripts
+update-sogeBot.sh
+compress-sogebot.sh
+compress-sogebot-test.sh
+# Nginx Configs
+nginx.sogebotproxy.conf
+sogebot.nginx.conf  
