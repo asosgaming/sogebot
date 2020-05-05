@@ -31,3 +31,4 @@ compress-sogebot-test.sh
 # Nginx Configs
 nginx.sogebotproxy.conf
 sogebot.nginx.conf  
+sgupdate-dev.sh
