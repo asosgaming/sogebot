@@ -25,6 +25,21 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Launch Program",
+            "program": "${workspaceRoot}\\server.js"
+        },
+        {
+        "type": "node",
+        "request": "launch",
+        "name": "Launch Training Script",
+        "program": "${workspaceRoot}\\training-script.js",
+        "runtimeArgs": [
+            "--max-old-space-size=4096"
+        ]
+    },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "WITH moderation",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
