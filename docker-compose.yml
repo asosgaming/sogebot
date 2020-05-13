@@ -1,0 +1,6 @@
+version: '2'
+services:
+  mariadb:
+    image: mariadb
+    environment: 
+      MYSQL_ROOT_PASSWORD: Car08Ram
