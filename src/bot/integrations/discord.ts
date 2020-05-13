@@ -59,12 +59,21 @@ class Discord extends Integration {
   cannotJoinToServerBtn = null;
 
   @settings('bot')
+  @ui({
+    type: 'discord-channel',
+  })
   listenAtChannels = '';
 
   @settings('bot')
+  @ui({
+    type: 'discord-channel',
+  })
   sendOnlineAnnounceToChannel = '';
 
   @settings('bot')
+  @ui({
+    type: 'discord-channel',
+  })
   sendGeneralAnnounceToChannel = '';
 
   @settings('bot')
@@ -189,6 +198,7 @@ class Discord extends Integration {
 
     if (this.client && this.sendOnlineAnnounceToChannel.length > 0) {
       // search discord channel by ID
+      let channelFound = false;
       for (const [ id, channel ] of this.client.channels.cache) {
         if (channel.type === 'text') {
           if (id === this.sendOnlineAnnounceToChannel || (channel as DiscordJs.TextChannel).name === this.sendGeneralAnnounceToChannel) {
@@ -218,6 +228,7 @@ class Discord extends Integration {
                 embed.addField('Subscribers', api.stats.currentSubscribers, true);
               }
               // Send the embed to the same channel as the message
+              channelFound = true;
               this.embedMessage = await (ch as DiscordJs.TextChannel).send(embed);
               chatOut(`#${(ch as DiscordJs.TextChannel).name}: [[online announce embed]] [${this.client.user?.tag}]`);
               this.embed = embed;
@@ -225,12 +236,18 @@ class Discord extends Integration {
           }
         }
       }
+      if (!channelFound) {
+        warning(`Discord channel ${this.sendOnlineAnnounceToChannel} not found on server.`);
+      }
     }
   }
 
   initClient() {
     if (!this.client) {
-      this.client = new DiscordJs.Client();
+      this.client = new DiscordJs.Client({
+        partials: ['REACTION', 'MESSAGE', 'CHANNEL'],
+        ws: { intents: ['GUILD_MESSAGES', 'GUILDS'] },
+      });
       this.client.on('ready', () => {
         if (this.client) {
           info(chalk.yellow('DISCORD: ') + `Logged in as ${get(this.client, 'user.tag', 'unknown')}!`);
@@ -342,6 +359,32 @@ class Discord extends Integration {
   }
 
   sockets() {
+    adminEndpoint(this.nsp, 'discord::getChannels', async (cb) => {
+      try {
+        if (this.client) {
+          cb(null, this.client.channels.cache
+            .filter(o => o.type === 'text')
+            .sort((a, b) => {
+              const nameA = (a as DiscordJs.TextChannel).name.toUpperCase(); // ignore upper and lowercase
+              const nameB = (b as DiscordJs.TextChannel).name.toUpperCase(); // ignore upper and lowercase
+              if (nameA < nameB) {
+                return -1;
+              }
+              if (nameA > nameB) {
+                return 1;
+              }
+              // names must be equal
+              return 0;
+            })
+            .map(o => ({ html: `<strong>#${(o as DiscordJs.TextChannel).name}</strong> &lt;${o.id}&gt;`, value: o.id }))
+          );
+        } else {
+          cb(null, []);
+        }
+      } catch (e) {
+        cb(e.stack, []);
+      }
+    });
     adminEndpoint(this.nsp, 'authorize', async (cb) => {
       if (this.token === '' || this.clientId === '') {
         cb('Cannot authorize! Missing clientId or token.', null);
