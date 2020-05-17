@@ -1,6 +1,6 @@
 {
   "name": "sogebot",
-  "version": "11.2.0-SNAPSHOT",
+  "version": "11.3.0-SNAPSHOT",
   "description": "Free Twitch Bot built on Node.js",
   "private": true,
   "sideEffects": [
@@ -18,8 +18,9 @@
     "bootstrap-slider": "10.6.2",
     "bootstrap-toggle": "2.2.2",
     "chalk": "4.0.0",
+    "chokidar": "3.4.0",
     "coffeescript": "2.5.1",
-    "core-js": "^3.6.5",
+    "core-js": "3.6.5",
     "cron-parser": "2.13.0",
     "cross-env": "7.0.2",
     "currency-symbol-map": "4.0.4",
