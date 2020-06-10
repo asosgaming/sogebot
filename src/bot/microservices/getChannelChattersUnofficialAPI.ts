@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { flatMap, includes } from 'lodash';
+import { chunk, flatMap, includes } from 'lodash';
 import { isMainThread, parentPort, Worker } from 'worker_threads';
 
 import {
@@ -14,9 +14,10 @@ import { User } from '../database/entity/user';
 import { ThreadEvent } from '../database/entity/threadEvent';
 import { getAllOnlineUsernames } from '../helpers/getAllOnlineUsernames';
 import { Settings } from '../database/entity/settings';
-import { getUserFromTwitch } from './getUserFromTwitch';
+import { getUsersFromTwitch } from './getUserFromTwitch';
 import { clusteredFetchAccountAge } from '../cluster';
 import { debug, warning } from '../helpers/log';
+import { SQLVariableLimit } from '../helpers/sql';
 
 const isThreadingEnabled = process.env.THREAD !== '0';
 
@@ -70,7 +71,7 @@ export const getChannelChattersUnofficialAPI = async (): Promise<{ modStatus: bo
       channel = JSON.parse(channel).toLowerCase();
     }
     if (bot) {
-      bot = JSON.parse(bot).toLowerCase();
+      bot = String(JSON.parse(bot)).toLowerCase();
     }
 
     const url = `https://tmi.twitch.tv/group/user/${channel}/chatters`;
@@ -81,7 +82,7 @@ export const getChannelChattersUnofficialAPI = async (): Promise<{ modStatus: bo
     }
 
     const chatters: any[] = flatMap(request.data.chatters);
-    const modStatus = request.data.chatters.moderators.map(o => o.toLowerCase()).includes(bot);
+    const modStatus = typeof bot !== 'undefined' && (request.data.chatters.moderators as string[]).map(o => o.toLowerCase()).includes(bot);
 
     const allOnlineUsers = await getAllOnlineUsernames();
 
@@ -102,6 +103,7 @@ export const getChannelChattersUnofficialAPI = async (): Promise<{ modStatus: bo
     }
 
     // insert joined online users
+    const usersToFetch: string[] = [];
     if (joinedUsers.length > 0) {
       for (const username of joinedUsers) {
         const user = await getRepository(User).findOne({ where: { username }});
@@ -112,24 +114,30 @@ export const getChannelChattersUnofficialAPI = async (): Promise<{ modStatus: bo
             await clusteredFetchAccountAge(user.userId);
           }
         } else {
-          // add new user to db
-          try {
-            const twitchObj = await getUserFromTwitch(username);
-            await getRepository(User).save({
-              userId: Number(twitchObj.id),
-              username: twitchObj.login,
-              displayname: twitchObj.display_name,
-              profileImageUrl: twitchObj.profile_image_url,
-            });
-
-            await clusteredFetchAccountAge(Number(twitchObj.id));
-          } catch (e) {
-            process.stderr.write('Something went wrong when getting user data of ' + username + '\n');
-            process.stderr.write(`${e.stack}\n`);
-            continue;
-          }
+          usersToFetch.push(username);
         }
       }
+    }
+
+    for (const usernameBatch of chunk(usersToFetch, 100)) {
+      getUsersFromTwitch(usernameBatch).then(users => {
+        if (users) {
+          getRepository(User).save(
+            users.map(user => {
+              return {
+                userId: Number(user.id),
+                username: user.login,
+                displayname: user.display_name,
+                profileImageUrl: user.profile_image_url,
+              };
+            }),
+            { chunk: Math.floor(SQLVariableLimit / 4) },
+          ).catch(() => {
+            // ignore
+            return;
+          });
+        }
+      });
     }
 
     if (!isMainThread) {
@@ -159,7 +167,7 @@ export const getChannelChattersUnofficialAPI = async (): Promise<{ modStatus: bo
       debug('microservice', 'getChannelChattersUnofficialAPI::kill');
       process.exit(0);
     }
-  };
+  }
 };
 
 if (!isMainThread) {

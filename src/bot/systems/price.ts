@@ -32,20 +32,21 @@ class Price extends System {
 
   constructor () {
     super();
-    this.addMenu({ category: 'manage', name: 'price', id: 'manage/price/list' });
+    this.addMenu({ category: 'manage', name: 'price', id: 'manage/price/list', this: this });
   }
 
   sockets() {
-    adminEndpoint(this.nsp, 'price::getAll', async (cb) => {
-      cb(await getRepository(PriceEntity).find({
-        order: {
-          price: 'ASC',
-        },
-      }));
+    adminEndpoint(this.nsp, 'generic::getAll', async (cb) => {
+      cb(null,
+        await getRepository(PriceEntity).find({
+          order: {
+            price: 'ASC',
+          },
+        }));
     });
 
-    adminEndpoint(this.nsp, 'price::getOne', async (id, cb) => {
-      cb(await getRepository(PriceEntity).findOne({ id }));
+    adminEndpoint(this.nsp, 'generic::getOne', async (id, cb) => {
+      cb(null, await getRepository(PriceEntity).findOne({ id: String(id) }));
     });
 
     adminEndpoint(this.nsp, 'price::save', async (price: PriceInterface, cb) => {
@@ -58,9 +59,9 @@ class Price extends System {
       }
     });
 
-    adminEndpoint(this.nsp, 'price::delete', async (id: string, cb) => {
+    adminEndpoint(this.nsp, 'generic::deleteById', async (id, cb) => {
       try {
-        await getRepository(PriceEntity).delete({ id });
+        await getRepository(PriceEntity).delete({ id: String(id) });
         cb(null);
       } catch (e) {
         error(e);
@@ -94,7 +95,7 @@ class Price extends System {
       ...(await getRepository(PriceEntity).findOne({ command: cmd })),
       command: cmd, price: parseInt(argPrice, 10),
     });
-    const response = prepare('price.price-was-set', { command: cmd, amount: parseInt(argPrice, 10), pointsName: await points.getPointsName(price) });
+    const response = prepare('price.price-was-set', { command: cmd, amount: parseInt(argPrice, 10), pointsName: await points.getPointsName(price.price) });
     return [{ response, ...opts }];
   }
 

@@ -8,6 +8,7 @@
     v-if="data && data.type === 'simple'" :style="{
     color: generateItems(data.items)[showSimpleValueIndex].color,
     'font-size': data.customizationFont.size + 'px',
+    'font-weight': data.customizationFont.weight,
     'font-family': data.customizationFont.family,
     'text-align': 'center',
     'text-shadow': textStrokeGenerator(data.customizationFont.borderPx, data.customizationFont.borderColor)
@@ -22,6 +23,7 @@
     </canvas>
     <div v-if="wheelWin" id="winbox" :style="{
       color: getContrastColor(wheelWin.fillStyle),
+      'font-weight': data.customizationFont.weight,
       'font-size': (data.customizationFont.size + 15)+ 'px',
       'font-family': data.customizationFont.family,
       'text-align': 'center',
@@ -86,20 +88,21 @@ export default class RandomizerOverlay extends Vue {
   theWheel: any = null;
   wheelWin: any = null;
 
-  speak(text, voice, rate, pitch, volume) {
+  speak(text: string, voice: string, rate: number, pitch: number, volume: number) {
     window.responsiveVoice.speak(text, voice, { rate, pitch, volume });
   }
 
   initResponsiveVoice() {
     if (typeof window.responsiveVoice === 'undefined') {
-      return setTimeout(() => this.initResponsiveVoice(), 200);
+      setTimeout(() => this.initResponsiveVoice(), 200);
+      return
     }
     window.responsiveVoice.init();
     console.debug('= ResponsiveVoice init OK')
   }
 
   checkResponsiveVoiceAPIKey() {
-    this.socketRV.emit('get.value', 'key', (err, value) => {
+    this.socketRV.emit('get.value', 'key', (err: string | null, value: string) => {
       if (this.responsiveAPIKey !== value) {
         // unload if values doesn't match
         this.$unloadScript("https://code.responsivevoice.org/responsivevoice.js?key=" + this.responsiveAPIKey)
@@ -124,7 +127,7 @@ export default class RandomizerOverlay extends Vue {
   created () {
     this.checkResponsiveVoiceAPIKey();
     setInterval(() => {
-      this.socket.emit('randomizer::getVisible', async (err, data) => {
+      this.socket.emit('randomizer::getVisible', async (err: string | null, data: Required<RandomizerInterface>) => {
         if (err) {
           return console.error(err)
         }
@@ -180,6 +183,8 @@ export default class RandomizerOverlay extends Vue {
               'centerX'      : 960,                 // Used to position on the background correctly.
               'centerY'      : 540,
               'textFontSize' : data.customizationFont.size,                  // Font size.
+              'textFontWeight' : data.customizationFont.weight,                  // Font weight.
+              'textFontFamily' : data.customizationFont.family,                  // Font family.
               'segments'     : segments,
               'responsive'   : true,  // This wheel is responsive!
               'animation'    :                      // Definition of the animation
@@ -239,7 +244,7 @@ export default class RandomizerOverlay extends Vue {
     ctx.fill();                   // Then fill.
   }
 
-  textStrokeGenerator(radius, color) {
+  textStrokeGenerator(radius: number, color: string) {
     if (radius === 0) return ''
 
     // config
@@ -313,7 +318,16 @@ export default class RandomizerOverlay extends Vue {
           if (this.showSimpleLoop > 0) {
             setTimeout(next, this.showSimpleSpeed)
           } else {
-            setTimeout(Math.random() > 0.3 ? blink : next, this.showSimpleSpeed) // move one a bit if lucky or not
+            setTimeout(() => {
+              if (Math.random() > 0.3) {
+                blink()
+                if (this.data && this.data.tts.enabled) {
+                  this.speak(this.generateItems(this.data.items)[this.showSimpleValueIndex].name, this.data.tts.voice, this.data.tts.rate, this.data.tts.pitch, this.data.tts.volume);
+                }
+               } else {
+                 next();
+               }
+            }, this.showSimpleSpeed); // move one a bit if lucky or not
           }
         }
         next();
@@ -327,7 +341,7 @@ export default class RandomizerOverlay extends Vue {
     items = items.filter(o => o.numOfDuplicates > 0);
 
 
-    const countGroupItems = (item: RandomizerItemInterface, count = 0) => {
+    const countGroupItems = (item: RandomizerItemInterface, count = 0): number => {
       const child = items.find(o => o.groupId === item.id);
       if (child) {
         return countGroupItems(child, count + 1);

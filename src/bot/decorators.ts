@@ -5,6 +5,9 @@ import { debug, error } from './helpers/log';
 import { isMainThread } from './cluster';
 import { isDbConnected } from './helpers/database';
 import { find } from './helpers/register';
+import { permission as permissionType } from './helpers/permissions';
+import * as constants from './constants';
+import Module from './_interface';
 
 export let loadingInProgress: string[] = [];
 export let areDecoratorsLoaded = false;
@@ -47,15 +50,16 @@ function getNameAndTypeFromStackTrace() {
   return { name, type };
 }
 
-export function ui(opts, category?: string) {
+export function ui(opts: any, category?: string) {
   const { name, type } = getNameAndTypeFromStackTrace();
 
-  return (target: object, key: string) => {
+  return (target: any, key: string) => {
     let path = category ? `${category}.${key}` : key;
 
     const register = async (retries = 0) => {
       if (!isDbConnected) {
-        return setTimeout(() => register(0), 1000);
+        setTimeout(() => register(0), 1000);
+        return;
       }
       try {
         const self = find(type, name);
@@ -69,7 +73,8 @@ export function ui(opts, category?: string) {
             path = s.category? s.category + '.' + path : path;
           } else {
             if (retries < 500) { // try to wait to settings to be registered
-              return setTimeout(() => register(++retries), 10);
+              setTimeout(() => register(++retries), 10);
+              return;
             }
           }
         }
@@ -87,7 +92,7 @@ export function ui(opts, category?: string) {
 export function settings(category?: string, isReadOnly = false) {
   const { name, type } = getNameAndTypeFromStackTrace();
 
-  return (target: object, key: string) => {
+  return (target: any, key: string) => {
     if (!isReadOnly) {
       loadingInProgress.push(`${type}.${name}.${key}`);
     }
@@ -98,19 +103,21 @@ export function settings(category?: string, isReadOnly = false) {
         throw new Error(`${type}.${name} not found in list`);
       }
       if (!isDbConnected) {
-        return setTimeout(() => registerSettings(), 1000);
+        setTimeout(() => registerSettings(), 1000);
+        return;
       }
       try {
         if (category === key) {
           throw Error(`Category and variable name cannot be same - ${type}.${name}.${key} in category ${category}`);
         }
-        VariableWatcher.add(`${type}.${name}.${key}`, self[key], isReadOnly);
+        VariableWatcher.add(`${type}.${name}.${key}`, (self as any)[key], isReadOnly);
 
         if (!isReadOnly) {
           // load variable from db
           const loadVariableValue = () => {
             if (!isDbConnected) {
-              return setTimeout(() => loadVariableValue(), 1000);
+              setTimeout(() => loadVariableValue(), 1000);
+              return;
             }
             self.loadVariableValue(key).then((value) => {
               if (typeof value !== 'undefined') {
@@ -136,15 +143,16 @@ export function settings(category?: string, isReadOnly = false) {
 }
 
 
-export function permission_settings(category?: string) {
+export function permission_settings(category?: string, exclude: string[] = []) {
   const { name, type } = getNameAndTypeFromStackTrace();
 
-  return (target: object, key: string) => {
+  return (target: any, key: string) => {
     loadingInProgress.push(`${type}.${name}.${key}`);
 
     const register = async () => {
       if (!isDbConnected) {
-        return setTimeout(() => register(), 1000);
+        setTimeout(() => register(), 1000);
+        return;
       }
       try {
         const self = find(type, name);
@@ -161,10 +169,14 @@ export function permission_settings(category?: string) {
         // load variable from db
         const loadVariableValue = () => {
           if (!isDbConnected) {
-            return setTimeout(() => loadVariableValue(), 1000);
+            setTimeout(() => loadVariableValue(), 1000);
+            return;
           }
           self.loadVariableValue('__permission_based__' + key).then((value: { [permissionId: string]: string }) => {
             if (typeof value !== 'undefined') {
+              for (const exKey of exclude) {
+                value[exKey] = '%%%%___ignored___%%%%';
+              }
               VariableWatcher.add(`${type}.${name}.__permission_based__${key}`, value, false);
               _.set(self, '__permission_based__' + key, value);
             }
@@ -188,20 +200,21 @@ export function permission_settings(category?: string) {
 export function shared(db = false) {
   const { name, type } = getNameAndTypeFromStackTrace();
 
-  return (target: object, key: string) => {
+  return (target: any, key: string) => {
     if (db) {
       loadingInProgress.push(`${type}.${name}.${key}`);
     }
     const register = async () => {
       if (!isDbConnected) {
-        return setTimeout(() => register(), 1000);
+        setTimeout(() => register(), 1000);
+        return;
       }
       try {
         const self = find(type, name);
         if (!self) {
           throw new Error(`${type}.${name} not found in list`);
         }
-        const defaultValue = self[key];
+        const defaultValue = (self as any)[key];
         VariableWatcher.add(`${type}.${name}.${key}`, defaultValue, false);
         if (db) {
           const loadVariableValue = () => {
@@ -225,17 +238,13 @@ export function shared(db = false) {
   };
 }
 
-export function parser(opts?: {
-  fireAndForget?: boolean;
-  permission?: string;
-  priority?: number;
-  dependsOn?: import('./_interface').Module[];
-}) {
-  opts = opts || {};
+export function parser(
+  { fireAndForget = false, permission = permissionType.VIEWERS, priority = constants.MEDIUM, dependsOn = [] }:
+  { fireAndForget?: boolean; permission?: string; priority?: number; dependsOn?: import('./_interface').Module[] } = {}) {
   const { name, type } = getNameAndTypeFromStackTrace();
 
-  return (target: object, key: string, descriptor: PropertyDescriptor) => {
-    registerParser(opts, { type, name, fnc: key });
+  return (target: any, key: string, descriptor: PropertyDescriptor) => {
+    registerParser({ fireAndForget, permission, priority, dependsOn }, { type, name, fnc: key });
     return descriptor;
   };
 }
@@ -243,7 +252,7 @@ export function parser(opts?: {
 export function command(opts: string) {
   const { name, type } = getNameAndTypeFromStackTrace();
 
-  return (target: object, key: string, descriptor: PropertyDescriptor) => {
+  return (target: any, key: string, descriptor: PropertyDescriptor) => {
     commandsToRegister.push({ opts, m: { type, name, fnc: key } });
     return descriptor;
   };
@@ -251,7 +260,7 @@ export function command(opts: string) {
 
 export function default_permission(uuid: string | null) {
   const { name, type } = getNameAndTypeFromStackTrace();
-  return (target: object, key: string | symbol, descriptor: PropertyDescriptor) => {
+  return (target: any, key: string | symbol, descriptor: PropertyDescriptor) => {
     permissions[`${type}.${name.toLowerCase()}.${String(key).toLowerCase()}`] = uuid;
     return descriptor;
   };
@@ -260,8 +269,8 @@ export function default_permission(uuid: string | null) {
 export function helper() {
   const { name, type } = getNameAndTypeFromStackTrace();
 
-  return (target: object, key: string | symbol, descriptor: PropertyDescriptor) => {
-    registerHelper({ type, name, fnc: key });
+  return (target: any, key: string | symbol, descriptor: PropertyDescriptor) => {
+    registerHelper({ type, name, fnc: String(key) });
     return descriptor;
   };
 }
@@ -269,13 +278,13 @@ export function helper() {
 export function rollback() {
   const { name, type } = getNameAndTypeFromStackTrace();
 
-  return (target: object, key: string, descriptor: PropertyDescriptor) => {
+  return (target: any, key: string, descriptor: PropertyDescriptor) => {
     registerRollback({ type, name, fnc: key });
     return descriptor;
   };
 }
 
-function registerHelper(m, retry = 0) {
+function registerHelper(m: { type: string, name: string, fnc: string }, retry = 0) {
   setTimeout(() => {
     try {
       const self = find(m.type, m.name);
@@ -299,7 +308,7 @@ function registerHelper(m, retry = 0) {
   }, 5000);
 }
 
-function registerRollback(m) {
+function registerRollback(m: { type: string, name: string, fnc: string }) {
   setTimeout(() => {
     try {
       const self = find(m.type, m.name);
@@ -314,7 +323,9 @@ function registerRollback(m) {
   }, 5000);
 }
 
-function registerParser(opts, m) {
+function registerParser(opts: {
+  permission: string; priority: number, dependsOn: Module[]; fireAndForget: boolean;
+}, m: { type: string, name: string, fnc: string }) {
   setTimeout(() => {
     try {
       const self = find(m.type, m.name);

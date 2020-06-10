@@ -1,3 +1,6 @@
+import {v4 as uuid} from 'uuid';
+import crypto from 'crypto';
+
 import _ from 'lodash';
 import * as constants from './constants';
 import { getBotSender } from './commons';
@@ -13,9 +16,10 @@ import currency from './currency';
 import general from './general';
 import tmi from './tmi';
 import { list } from './helpers/register';
-import { cachedCommandsPermissions } from './helpers/commands/pCache';
+import { addToParserFindCache, cachedCommandsPermissions, parserFindCache } from './helpers/cache';
 
 class Parser {
+  id = uuid();
   started_at = Date.now();
   message = '';
   sender: CommandOptions['sender'] | null = null;
@@ -46,14 +50,14 @@ class Parser {
     debug('parser.process', 'ISMODERATED START of "' + this.message + '"');
     if (this.skip) {
       return false;
-    };
+    }
 
     const parsers = await this.parsers();
     for (const parser of parsers) {
       const time = Date.now();
       if (parser.priority !== constants.MODERATION) {
         continue;
-      }; // skip non-moderation parsers
+      } // skip non-moderation parsers
       debug('parser.process', 'Processing ' + parser.name);
       const text = this.message.trim().replace(/^(!\w+)/i, '');
       const opts = {
@@ -66,7 +70,7 @@ class Parser {
 
       debug('parser.time', 'Processed ' + parser.name + ' took ' + ((Date.now() - time) / 1000));
       if (!isOk) {
-        debug('parser.process', 'Moderation failed ' + JSON.stringify(parser.fnc));
+        debug('parser.process', 'Moderation failed ' + parser.name);
         return true;
       }
     }
@@ -80,7 +84,7 @@ class Parser {
     for (const parser of parsers) {
       if (parser.priority === constants.MODERATION) {
         continue;
-      }; // skip moderation parsers
+      } // skip moderation parsers
 
       if (this.sender) {
         const permissionCheckTime = Date.now();
@@ -100,6 +104,7 @@ class Parser {
         debug('parser.process', 'Processing ' + parser.name + ' (fireAndForget: ' + parser.fireAndForget + ')');
         const text = this.message.trim().replace(/^(!\w+)/i, '');
         const opts = {
+          id: this.id,
           sender: this.sender,
           message: this.message.trim(),
           parameters: text.trim(),
@@ -199,28 +204,37 @@ class Parser {
    * @param {string[] | null} cmdlist - Set of commands to check, if null all registered commands are checked
    * @returns object or null if empty
    */
-  async find (message, cmdlist: {
-    this: any; fnc: Function; command: string; id: string; permission: string | null; _fncName: string;
+  async find (message: string, cmdlist: {
+    this: any; fnc: (opts: CommandOptions) => CommandResponse[]; command: string; id: string; permission: string | null; _fncName: string;
   }[] | null = null) {
     debug('parser.find', JSON.stringify({message, cmdlist}));
-    if (cmdlist === null) {
-      cmdlist = await this.getCommandsList();
-    }
-    for (const item of cmdlist) {
-      const onlyParams = message.trim().toLowerCase().replace(item.command, '');
-      const isStartingWith = message.trim().toLowerCase().startsWith(item.command);
 
-      debug('parser.find', JSON.stringify({command: item.command, isStartingWith}));
-
-      if (isStartingWith && (onlyParams.length === 0 || (onlyParams.length > 0 && onlyParams[0] === ' '))) {
-        const customPermission = await permissions.getCommandPermission(item.id);
-        if (typeof customPermission !== 'undefined') {
-          item.permission = customPermission;
-        }
-        return item;
+    const hash = crypto.createHash('sha1').update(JSON.stringify({message, cmdlist})).digest('hex');
+    const cache = parserFindCache.find(o => o.hash === hash);
+    if (cache) {
+      return cache.command;
+    } else {
+      if (cmdlist === null) {
+        cmdlist = await this.getCommandsList();
       }
+      for (const item of cmdlist) {
+        const onlyParams = message.trim().toLowerCase().replace(item.command, '');
+        const isStartingWith = message.trim().toLowerCase().startsWith(item.command);
+
+        debug('parser.find', JSON.stringify({command: item.command, isStartingWith}));
+
+        if (isStartingWith && (onlyParams.length === 0 || (onlyParams.length > 0 && onlyParams[0] === ' '))) {
+          const customPermission = await permissions.getCommandPermission(item.id);
+          if (typeof customPermission !== 'undefined') {
+            item.permission = customPermission;
+          }
+          addToParserFindCache(hash, item);
+          return item;
+        }
+      }
+      addToParserFindCache(hash, null);
+      return null;
     }
-    return null;
   }
 
   async getCommandsList () {
@@ -235,11 +249,13 @@ class Parser {
     }
     commands = _(await Promise.all(commands)).flatMap().sortBy(o => -o.command.length).value();
     for (const command of commands) {
-      debug('parser.command', `Checking permission for ${command.name} ${command.id}`);
       const permission = cachedCommandsPermissions.find(cachedPermission => cachedPermission.id === command.id);
       if (permission) {
-        command.permission = permission.permission;
-      }; // change to custom permission
+        command.permission = permission.permission; // change to custom permission
+        debug('parser.command', `Checking permission for ${command.id} - custom ${permission.name}`);
+      } else {
+        debug('parser.command', `Checking permission for ${command.id} - original`);
+      }
     }
     return commands;
   }
@@ -248,16 +264,16 @@ class Parser {
     debug('parser.command', { sender, message });
     if (!message.startsWith('!')) {
       return [];
-    }; // do nothing, this is not a command or user is ignored
+    } // do nothing, this is not a command or user is ignored
     const command = await this.find(message, null);
     debug('parser.command', { command });
     if (_.isNil(command)) {
       return [];
-    }; // command not found, do nothing
+    } // command not found, do nothing
     if (command.permission === null) {
       warning(`Command ${command.command} is disabled!`);
       return [];
-    }; // command is disabled
+    } // command is disabled
 
     if (this.sender && !disablePermissionCheck) {
       if (typeof getFromViewersCache(this.sender.userId, command.permission) === 'undefined') {
@@ -285,7 +301,7 @@ class Parser {
 
       if (_.isNil(command.id)) {
         throw Error(`command id is missing from ${command.fnc}`);
-      };
+      }
 
       if (typeof command.fnc === 'function' && !_.isNil(command.id)) {
         incrementCountOfCommandUsage(command.command);
@@ -294,7 +310,7 @@ class Parser {
       } else {
         error(command.command + ' have wrong undefined function ' + command._fncName + '() registered!');
         return [];
-      };
+      }
     } else {
       // do all rollbacks when permission failed
       const rollbacks = await this.rollbacks();

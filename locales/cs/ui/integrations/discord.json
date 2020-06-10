@@ -1,6 +1,7 @@
 {
   "settings": {
     "enabled": "Status",
+    "guild": "Server",
     "listenAtChannels": "Poslouchat příkazy na tomto kanálu",
     "sendOnlineAnnounceToChannel": "Posílat online oznámení do tohoto kanálu",
     "sendGeneralAnnounceToChannel": "Posílat obecné oznámení do tohoto kanálu",
@@ -10,6 +11,8 @@
     "joinToServerBtn": "Kliknutím připojíte bota na váš server",
     "cannotJoinToServerBtn": "Nastavte token a clientId, abyste mohli připojit bota na váš server",
     "noChannelSelected": "není vybrán žádný kanál",
-    "noRoleSelected": "není vybrána žádná role"
+    "noRoleSelected": "není vybrána žádná role",
+    "noGuildSelected": "nebyl vybrán žádný server",
+    "noGuildSelectedBox": "Vyberte server, který bot bude používat a zobrazí se vám další nastavení"
   }
 }

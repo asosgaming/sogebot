@@ -140,7 +140,10 @@
     },
     methods: {
       refreshOrder() {
-        this.socket.emit('permission', this.$route.params.id, (p) => {
+        this.socket.emit('generic::getOne', this.$route.params.id, (err: string | null, p: PermissionsInterface) => {
+          if (err) {
+            return console.error(err);
+          }
           if (this.item) {
             this.$set(this.item, 'order', p.order);
           }
@@ -150,14 +153,17 @@
         this.isLoading.permission = true
         this.isPending = false;
 
-        this.socket.emit('permission', this.$route.params.id, (p) => {
+        this.socket.emit('generic::getOne', this.$route.params.id, (err: string | null, p: PermissionsInterface) => {
+          if (err) {
+            return console.error(err);
+          }
           this.item = p;
           this.isLoading.permission = false;
         })
       },
       save() {
         this.isSaving = 1
-        this.socket.emit('permission::save', this.item, (err, data) => {
+        this.socket.emit('permission::save', this.item, (err: string | null, data: PermissionsInterface) => {
           if (err) {
             this.isSaving = 3
           } else {
@@ -169,7 +175,7 @@
         })
       },
       removePermission() {
-        this.socket.emit('permission::delete', this.$route.params.id, () => {
+        this.socket.emit('generic::deleteById', this.$route.params.id, () => {
           this.$emit('delete');
           this.$router.push({ name: 'PermissionsSettings' })
         })

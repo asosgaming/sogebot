@@ -209,48 +209,7 @@
                   </div>
                 </div>
 
-                <div class="card col-12 mt-2 p-0 m-0" v-if="currentGoal.display !== 'custom'">
-                  <div class="card-header">{{ translate('registry.goals.fontSettings') }}</div>
-                  <div class="card-body">
-                    <div class="form-group col-md-12">
-                      <label for="font_selector">{{ translate('registry.goals.input.fonts.title') }}</label>
-                      <select class="form-control" v-model="currentGoal.customizationFont.family">
-                        <option v-for="font of fonts" :value="font.text" :key="font.text">{{font.text}}</option>
-                      </select>
-                      <small class="form-text text-muted" v-html="translate('registry.goals.input.fonts.help')"></small>
-                    </div>
-
-                    <div class="row pl-3 pr-3">
-                      <div class="form-group col-md-3">
-                        <label for="fonts_size_input">{{ translate('registry.goals.input.fontSize.title') }}</label>
-                        <input v-model="currentGoal.customizationFont.size" type="number" min="1" class="form-control" id="fonts_size_input">
-                        <small class="form-text text-muted">{{ translate('registry.goals.input.fontSize.help') }}</small>
-                        <div class="invalid-feedback"></div>
-                      </div>
-
-                      <div class="form-group col-md-3">
-                        <label for="fonts_borderPx_input">{{ translate('registry.goals.input.borderPx.title') }}</label>
-                        <input v-model="currentGoal.customizationFont.borderPx" type="number" min="0" class="form-control" id="fonts_borderPx_input">
-                        <small class="form-text text-muted">{{ translate('registry.goals.input.borderPx.help') }}</small>
-                        <div class="invalid-feedback"></div>
-                      </div>
-
-                      <div class="form-group col-md-6">
-                        <div class="row pl-3 pr-3">
-                          <label class="w-100" for="fonts_color_input">{{ translate('registry.goals.input.color.title') }}</label>
-                          <input type="text" class="form-control col-10" id="fonts_color_input" v-model="currentGoal.customizationFont.color">
-                          <input type="color" class="form-control col-2" v-model="currentGoal.customizationFont.color">
-                        </div>
-
-                        <div class="row pl-3 pr-3 pt-2">
-                          <label class="w-100" for="fonts_color_input">{{ translate('registry.goals.input.borderColor.title') }}</label>
-                          <input type="text" class="form-control col-10" id="fonts_borderColor_input" v-model="currentGoal.customizationFont.borderColor">
-                          <input type="color" class="form-control col-2" v-model="currentGoal.customizationFont.borderColor">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <font :data.sync="currentGoal.customizationFont" key="goals-font" class="col-12 mt-2 p-0 m-0" v-if="currentGoal.display !== 'custom'"/>
 
                 <div class="card col-12 mt-2 p-0 m-0" v-if="currentGoal.display !== 'custom'">
                   <div class="card-header">{{ translate('registry.goals.barSettings') }}</div>
@@ -326,6 +285,7 @@ export default Vue.extend({
   components: {
     panel: () => import('../../../components/panel.vue'),
     holdButton: () => import('../../../components/holdButton.vue'),
+    font: () => import('../../../components/font.vue'),
     datetime: VueFlatPickr,
     codemirror,
   },
@@ -409,7 +369,7 @@ export default Vue.extend({
   },
   methods: {
     del: function () {
-      this.socket.emit('goals::remove', this.group, (err) => {
+      this.socket.emit('goals::remove', this.group, (err: string | null) => {
         if (err) {
           console.error(err);
         } else {
@@ -426,7 +386,7 @@ export default Vue.extend({
         this.group.name = [...Array(10)].map(() => Math.random().toString(36)[3]).join('')
       }
 
-      this.socket.emit('goals::save', this.group, (err) => {
+      this.socket.emit('goals::save', this.group, (err: string | null) => {
         if (err) {
           console.error(err);
         } else {
@@ -438,7 +398,7 @@ export default Vue.extend({
         }, 1000)
       })
     },
-    removeGoal: function (id) {
+    removeGoal: function (id: string) {
       this.group.goals = this.group.goals.filter((o) => o.id !== id)
     },
     addGoal: function () {
@@ -459,6 +419,7 @@ export default Vue.extend({
         },
         customizationFont: {
           family: 'PT Sans',
+          weight: 500,
           color: '#ffffff',
           size: 20,
           borderColor: '#000000',
@@ -504,13 +465,19 @@ export default Vue.extend({
   },
   mounted: async function () {
     if (this.$route.params.id) {
-      this.socket.emit('goals::getOne', this.$route.params.id, (err, d: Required<GoalGroupInterface>) => {
+      this.socket.emit('generic::getOne', this.$route.params.id, (err: string | null, d: Required<GoalGroupInterface>) => {
         if (err) {
           console.error(err);
           return;
         }
         if (Object.keys(d).length === 0) this.$router.push({ name: 'GoalsRegistryList' })
         this.groupId = String(d.id)
+
+        // workaround for missing weight after https://github.com/sogehige/sogeBot/issues/3871
+        for (const goal of d.goals) {
+          goal.customizationFont.weight = goal.customizationFont.weight ?? 500;
+        }
+
         this.group = d
 
         if (this.uiShowGoal === '' && this.group.goals.length > 0) {
@@ -535,7 +502,7 @@ export default Vue.extend({
 
       request.send();
     })
-    this.fonts = response.items.map((o) => {
+    this.fonts = response.items.map((o: { family: string }) => {
       return { text: o.family, value: o.family }
     })
   }

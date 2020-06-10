@@ -1,6 +1,7 @@
 {
   "settings": {
     "enabled": "Status",
+    "guild": "Discord Server",
     "listenAtChannels": "Diese Kanäle überwachen",
     "sendOnlineAnnounceToChannel": "Stream online Benachrichtigung in folgendem Channel",
     "sendGeneralAnnounceToChannel": "Allgemeine Benachrichtigung in folgendem Channel",
@@ -9,7 +10,9 @@
     "token": "Token",
     "joinToServerBtn": "Hier klicken, um den Bot mit dem Server zu verbinden",
     "cannotJoinToServerBtn": "Token und Client-Id angeben, damit der Bot sich mit dem Server verbinden kann",
-    "noChannelSelected": "no channel selected",
-    "noRoleSelected": "no role selected"
+    "noChannelSelected": "Keine Channel ausgewählt",
+    "noRoleSelected": "Keine Rolle ausgewählt",
+    "noGuildSelected": "kein Server ausgewählt",
+    "noGuildSelectedBox": "Wähle Server aus, wo der Bot beitreten soll und du wirst mehr Einstellungen sehen"
   }
 }

@@ -1,6 +1,10 @@
 {
   "settings": {
     "enabled": "Статус",
-    "secretToken": "Секретный ключ"
+    "access_token": {
+      "title": "Access token",
+      "help": "Получить access token по адресу https://www.sogebot.xyz/integrations/#DonationAlerts"
+    },
+    "accessTokenBtn": "Acess token генератор для DonationAlerts"
   }
 }

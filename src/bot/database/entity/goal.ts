@@ -15,7 +15,7 @@ export interface GoalGroupInterface {
     type: 'multi';
     spaceBetweenGoalsInPx: number;
   };
-};
+}
 
 export interface GoalInterface {
   id?: string;
@@ -41,6 +41,7 @@ export interface GoalInterface {
     family: string;
     color: string;
     size: number;
+    weight: number;
     borderColor: string;
     borderPx: number;
   };

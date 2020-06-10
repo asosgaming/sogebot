@@ -11,7 +11,7 @@ import { info } from './helpers/log';
 import { CacheTitles } from './database/entity/cacheTitles';
 import { v4 as uuid} from 'uuid';
 import { getConnection, getManager, getRepository, IsNull } from 'typeorm';
-import { Dashboard, DashboardInterface, Widget } from './database/entity/dashboard';
+import { Dashboard, Widget } from './database/entity/dashboard';
 import { Translation } from './database/entity/translation';
 import { TwitchTag } from './database/entity/twitch';
 import { User } from './database/entity/user';
@@ -120,7 +120,7 @@ export const init = () => {
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
   });
 
-  menu.push({ category: 'main', name: 'dashboard', id: 'dashboard' });
+  menu.push({ category: 'main', name: 'dashboard', id: 'dashboard', this: null });
 
   setTimeout(() => {
     adminEndpoint('/', 'panel.sendStreamData', sendStreamData);
@@ -167,7 +167,7 @@ export const init = () => {
     });
     // twitch game and title change
     socket.on('getGameFromTwitch', function (game) {
-      api.sendGameFromTwitch(api, socket, game);
+      api.sendGameFromTwitch(socket, game);
     });
     socket.on('getUserTwitchGames', async () => {
       const titles = await getRepository(CacheTitles).find();
@@ -183,7 +183,7 @@ export const init = () => {
       const titles = await getRepository(CacheTitles).find();
       socket.emit('sendUserTwitchGamesAndTitles', titles);
     });
-    socket.on('cleanupGameAndTitle', async (data, cb) => {
+    socket.on('cleanupGameAndTitle', async (data: { titles: { title: string, game: string; id: string }[], game: string, title: string }, cb) => {
       // remove empty titles
       await getManager()
         .createQueryBuilder()
@@ -246,8 +246,8 @@ export const init = () => {
       cb(null, allTitles);
     });
     socket.on('updateGameAndTitle', async (data, cb) => {
-      const status = await api.setTitleAndGame(null, data);
-      await api.setTags(null, data.tags);
+      const status = await api.setTitleAndGame(data);
+      await api.setTags(data.tags);
 
       if (!status) { // twitch refused update
         cb(true);
@@ -342,10 +342,10 @@ export const init = () => {
       cb(null, errorsToShow);
     });
 
-    adminEndpoint('/', 'panel::availableWidgets', async (userId: number, type: DashboardInterface['type'], cb) => {
+    adminEndpoint('/', 'panel::availableWidgets', async (opts, cb) => {
       const dashboards = await getRepository(Dashboard).find({
         where: {
-          userId, type,
+          userId: opts.userId, type: opts.type,
         },
         relations: ['widgets'],
         order: {
@@ -363,24 +363,24 @@ export const init = () => {
       cb(null, sendWidgets);
     });
 
-    adminEndpoint('/', 'panel::dashboards', async (userId: number, type: DashboardInterface['type'], cb) => {
+    adminEndpoint('/', 'panel::dashboards', async (opts, cb) => {
       getRepository(Widget).delete({ dashboardId: IsNull() });
       const dashboards = await getRepository(Dashboard).find({
-        where: { userId, type },
+        where: { userId: opts.userId, type: opts.type },
         relations: ['widgets'],
         order: { createdAt: 'ASC' },
       });
       cb(null, dashboards);
     });
 
-    adminEndpoint('/', 'panel::dashboards::remove', async (userId: number, type: DashboardInterface['type'], id: string, cb) => {
-      await getRepository(Dashboard).delete({ userId, type, id });
+    adminEndpoint('/', 'panel::dashboards::remove', async (opts, cb) => {
+      await getRepository(Dashboard).delete({ userId: opts.userId, type: opts.type, id: opts.id });
       await getRepository(Widget).delete({ dashboardId: IsNull() });
       cb(null);
     });
 
-    adminEndpoint('/', 'panel::dashboards::create', async (userId: number, name: string, cb) => {
-      cb(null, await getRepository(Dashboard).save({ name, createdAt: Date.now(), id: uuid(), userId, type: 'admin' }));
+    adminEndpoint('/', 'panel::dashboards::create', async (opts, cb) => {
+      cb(null, await getRepository(Dashboard).save({ name: opts.name, createdAt: Date.now(), id: uuid(), userId: opts.userId, type: 'admin' }));
     });
 
     socket.on('addWidget', async function (widgetName, id, cb) {
@@ -443,7 +443,7 @@ export const init = () => {
         toEmit.push({
           name: system.toLowerCase(),
         });
-      };
+      }
       cb(null, toEmit);
     });
     socket.on('integrations', async (cb) => {
@@ -505,11 +505,11 @@ export const init = () => {
     });
 
     adminEndpoint('/', 'menu', (cb) => {
-      cb(menu);
+      cb(null, menu.map((o) => ({ category: o.category, name: o.name, id: o.id, enabled: o.this ? o.this.enabled : true })));
     });
 
     publicEndpoint('/', 'menu::public', (cb) => {
-      cb(menuPublic);
+      cb(null, menuPublic);
     });
 
     socket.on('translations', (cb) => {
@@ -547,7 +547,7 @@ export const expose = function () {
   });
 };
 
-const sendStreamData = async function (cb) {
+const sendStreamData = async function (cb: (error: Error | string | null, data: any) => void) {
   try {
     const ytCurrentSong = Object.values(songs.isPlaying).find(o => o) ? _.get(JSON.parse(songs.currentSong), 'title', null) : null;
     let spotifyCurrentSong: null | string = _.get(JSON.parse(spotify.currentSong), 'song', '') + ' - ' + _.get(JSON.parse(spotify.currentSong), 'artist', '');

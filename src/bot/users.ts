@@ -2,7 +2,6 @@ import Core from './_interface';
 
 import { isMainThread } from './cluster';
 import axios from 'axios';
-import { isNil } from 'lodash';
 import { setTimeout } from 'timers';
 
 import { permission } from './helpers/permissions';
@@ -14,6 +13,7 @@ import permissions from './permissions';
 import oauth from './oauth';
 import api from './api';
 import currency from './currency';
+import { Permissions } from './database/entity/permissions';
 
 class Users extends Core {
   uiSortCache: string | null = null;
@@ -22,7 +22,7 @@ class Users extends Core {
   constructor () {
     super();
 
-    this.addMenu({ category: 'manage', name: 'viewers', id: 'manage/viewers/list' });
+    this.addMenu({ category: 'manage', name: 'viewers', id: 'manage/viewers/list', this: null });
 
     if (isMainThread) {
       setTimeout(() => {
@@ -57,7 +57,6 @@ class Users extends Core {
       // set all users offline on start
       await getRepository(User).update({}, { isOnline: false });
     } else {
-
       // get new users
       const newChatters = await getRepository(User).find({ isOnline: true, watchedTime: 0 });
       api.stats.newChatters += newChatters.length;
@@ -73,6 +72,8 @@ class Users extends Core {
         } else {
           api.stats.currentWatchedTime += incrementedUsers.affected * interval;
         }
+
+        permissions.recacheOnlineUsersPermission();
       } else {
         await getRepository(User).increment({ isOnline: true }, 'chatTimeOffline', interval);
       }
@@ -105,18 +106,25 @@ class Users extends Core {
     }
   }
 
-  async getUsernamesFromIds (IdsList: Array<number>) {
-    const IdsToUsername = {};
-    for (const id of IdsList) {
-      if (!isNil(IdsToUsername[id])) {
-        continue;
-      } // skip if already had map
-      const user = await getRepository(User).findOne({ userId: id });
-      if (user) {
-        IdsToUsername[id] = user.username;
+  async getUsernamesFromIds (IdsList: number[]): Promise<{ id: number; username: string }[]> {
+    const uniqueWithUsername = await Promise.all(
+      [...new Set(IdsList)]
+        .map(async (id) => {
+          const user = await getRepository(User).findOne({ userId: id });
+          if (user) {
+            return { id: id, username: user.username };
+          }
+          return null;
+        })
+    );
+    return uniqueWithUsername.reduce(async (prev: any, cur) => {
+      const value = await cur;
+      if (value) {
+        return { ...prev, [value.id]: value.username };
+      } else {
+        return prev;
       }
-    }
-    return IdsToUsername;
+    }, {});
   }
 
   async getNameById (userId: number) {
@@ -162,23 +170,33 @@ class Users extends Core {
   sockets () {
     adminEndpoint(this.nsp, 'viewers::resetPointsAll', async (cb) => {
       await getRepository(User).update({}, { points: 0 });
-      cb();
+      if (cb) {
+        cb(null);
+      }
     });
     adminEndpoint(this.nsp, 'viewers::resetMessagesAll', async (cb) => {
       await getRepository(User).update({}, { messages: 0, pointsByMessageGivenAt: 0 });
-      cb();
+      if (cb) {
+        cb(null);
+      }
     });
     adminEndpoint(this.nsp, 'viewers::resetWatchedTimeAll', async (cb) => {
       await getRepository(User).update({}, { watchedTime: 0 });
-      cb();
+      if (cb) {
+        cb(null);
+      }
     });
     adminEndpoint(this.nsp, 'viewers::resetBitsAll', async (cb) => {
       await getRepository(UserBit).clear();
-      cb();
+      if (cb) {
+        cb(null);
+      }
     });
     adminEndpoint(this.nsp, 'viewers::resetTipsAll', async (cb) => {
       await getRepository(UserTip).clear();
-      cb();
+      if (cb) {
+        cb(null);
+      }
     });
     adminEndpoint(this.nsp, 'viewers::save', async (viewer: Required<UserInterface>, cb) => {
       try {
@@ -219,7 +237,7 @@ class Users extends Core {
         cb(e.stack, null);
       }
     });
-    adminEndpoint(this.nsp, 'find.viewers', async (opts: { state?: any; search?: string; filter?: { subscribers: null | boolean; followers: null | boolean; active: null | boolean; vips: null | boolean }; page: number; order?: { orderBy: string; sortOrder: 'ASC' | 'DESC' } }, cb) => {
+    adminEndpoint(this.nsp, 'find.viewers', async (opts, cb) => {
       try {
         const connection = await getConnection();
         opts.page = opts.page ?? 0;
@@ -333,13 +351,9 @@ class Users extends Core {
           const aggregatedBits = viewer.bits.map((o) => Number(o.amount)).reduce((a, b) => a + b, 0);
 
           const permId = await permissions.getUserHighestPermission(userId);
-          let permissionGroup;
-          if (permId) {
-            permissionGroup = await permissions.get(permId);
-          } else {
-            permissionGroup = permission.VIEWERS;
-          }
-
+          const permissionGroup = (await getRepository(Permissions).findOneOrFail({
+            where: { id: permId || permission.VIEWERS },
+          }));
           cb(null, {...viewer, aggregatedBits, aggregatedTips, permission: permissionGroup});
         } else {
           cb(null);

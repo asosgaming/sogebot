@@ -4,7 +4,7 @@ import io from 'socket.io';
 import ioClient from 'socket.io-client';
 import http from 'http';
 
-import { chatIn, chatOut, isDebugEnabled as debugIsEnabled, info, whisperIn, whisperOut } from './helpers/log.js';
+import { chatIn, chatOut, isDebugEnabled as debugIsEnabled, error, info, whisperIn, whisperOut } from './helpers/log.js';
 import oauth from './oauth.js';
 import api from './api.js';
 import tmi from './tmi.js';
@@ -19,7 +19,8 @@ const availableSockets: {
 
 let lastSocketIdx = 0;
 
-let socketIO, clientIO;
+let socketIO: io.Server;
+let clientIO: SocketIOClient.Socket;
 
 const isClusterEnabled = /^true$/i.test(process.env.CLUSTER ?? 'false');
 const clusterId = process.env.CLUSTER_ID ?? 'e77f8113-5be4-474e-a603-b435d839ab00';
@@ -43,15 +44,20 @@ export const init = async () => {
 
       socketIO.on('connection', (socket) => {
         socket.on('clusteredClientChat', (type, username, messageToSend) => clusteredClientChat(type, username, messageToSend));
-        socket.on('clusteredClientTimeout', (username, timeMs, reason) => clusteredClientTimeout(username, timeMs, reason));
+        socket.on('clusteredClientTimeout', (username, timeMs, reason, isMod) => clusteredClientTimeout(username, timeMs, reason, isMod));
         socket.on('clusteredClientDelete', (senderId) => clusteredClientDelete(senderId));
         socket.on('clusteredWhisperIn', (message) => clusteredWhisperIn(message));
         socket.on('clusteredChatIn', (message) => clusteredChatIn(message));
         socket.on('clusteredWhisperOut', (message) => clusteredWhisperOut(message));
         socket.on('clusteredChatOut', (message) => clusteredChatOut(message));
+        socket.on('clusteredAPI', (fName: string, args: any[]) => {
+          (api as any)[fName].apply(api, args);
+        });
         socket.on('clusteredFetchAccountAge', async (userId, cb) => {
           await clusteredFetchAccountAge(userId);
-          cb(); // return when done
+          if (cb) {
+            cb(null);
+          } // return when done
         });
 
         socket.on('received:message', (cb) => {
@@ -76,14 +82,14 @@ export const init = async () => {
         },
       });
 
-      clientIO.on('send:message', async (data) => {
+      clientIO.on('send:message', async (data: any) => {
         clientIO.emit('received:message', await tmi.message(data, true));
       });
     }
-  };
+  }
 };
 
-export const manageMessage = async (data) => {
+export const manageMessage = async (data: any) => {
   // randomly select from available sockets + master
   const sockets = [ 'main', ...Object.keys(availableSockets).filter(socketId => availableSockets[socketId].isAlive ) ];
   lastSocketIdx++;
@@ -99,18 +105,22 @@ export const manageMessage = async (data) => {
   }
 };
 
-export const clusteredClientChat = (type, username, messageToSend) => {
+export const clusteredClientChat = (type: 'say' | 'whisper' | 'me', username: string, messageToSend: string) => {
   if (isMainThread) {
     if (debugIsEnabled('tmi')) {
       return;
     }
-    tmi.client.bot?.chat[type](username, messageToSend);
+    if (type === 'me') {
+      tmi.client.bot?.chat.say(username, `/me ${messageToSend}`);
+    } else {
+      tmi.client.bot?.chat[type](username, messageToSend);
+    }
   } else {
     clientIO.emit('clusteredClientChat', type, username, messageToSend);
   }
 };
 
-export const clusteredClientDelete = (senderId) => {
+export const clusteredClientDelete = (senderId: string) => {
   if (isMainThread) {
     if (debugIsEnabled('tmi')) {
       return;
@@ -121,43 +131,57 @@ export const clusteredClientDelete = (senderId) => {
   }
 };
 
-export const clusteredClientTimeout = (username, timeMs, reason) => {
+export const clusteredClientTimeout = (username: string, timeMs: number, reason: string, isMod: boolean) => {
   if (isMainThread) {
-    tmi.client.bot?.chat.timeout(oauth.generalChannel, username, timeMs, reason);
+    if (isMod) {
+      if (tmi.client.broadcaster) {
+        tmi.client.broadcaster.chat.timeout(oauth.generalChannel, username, timeMs, reason);
+      } else {
+        error('Cannot timeout mod user, as you don\'t have set broadcaster in chat');
+      }
+    } else {
+      tmi.client.bot?.chat.timeout(oauth.generalChannel, username, timeMs, reason);
+    }
   } else {
     clientIO.emit('clusteredClientTimeout', username, timeMs, reason);
   }
 };
 
-export const clusteredWhisperIn = (message) => {
+export const clusteredAPI = (fName: string, args: any[]) => {
+  if (!isMainThread) {
+    clientIO.emit('clusteredAPI', fName, args);
+  }
+};
+
+export const clusteredWhisperIn = (message: string) => {
   whisperIn(message);
   if (!isMainThread) {
     clientIO.emit('clusteredWhisperIn', message);
   }
 };
 
-export const clusteredChatIn = (message) => {
+export const clusteredChatIn = (message: string) => {
   chatIn(message);
   if (!isMainThread) {
     clientIO.emit('clusteredChatIn', message);
   }
 };
 
-export const clusteredWhisperOut = (message) => {
+export const clusteredWhisperOut = (message: string) => {
   whisperOut(message);
   if (!isMainThread) {
     clientIO.emit('clusteredWhisperOut', message);
   }
 };
 
-export const clusteredChatOut = (message) => {
+export const clusteredChatOut = (message: string) => {
   chatOut(message);
   if (!isMainThread) {
     clientIO.emit('clusteredChatOut', message);
   }
 };
 
-export const clusteredFetchAccountAge = async (userId) => {
+export const clusteredFetchAccountAge = async (userId: number) => {
   if (isMainThread) {
     await api.fetchAccountAge(userId);
   } else {

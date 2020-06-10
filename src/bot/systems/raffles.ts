@@ -64,7 +64,7 @@ class Raffles extends System {
         cb(e.stack);
       }
     });
-    adminEndpoint(this.nsp, 'raffle::updateParticipant', async (participant: RaffleParticipantInterface, cb) => {
+    adminEndpoint(this.nsp, 'raffle::updateParticipant', async (participant, cb) => {
       try {
         cb(
           null,
@@ -138,7 +138,7 @@ class Raffles extends System {
         };
         winner.messages.push(message);
         await getRepository(RaffleParticipant).save(winner);
-      };
+      }
     }
     return true;
   }
@@ -207,15 +207,14 @@ class Raffles extends System {
     let maxTickets = 100;
 
     if (type === TYPE_TICKETS) {
-      let match;
-      match = opts.parameters.match(/-min (\d+)/);
-      if (!_.isNil(match)) {
-        minTickets = Math.max(match[1], minTickets);
+      const matchMin = opts.parameters.match(/-min (\d+)/);
+      if (!_.isNil(matchMin)) {
+        minTickets = Math.max(Number(matchMin[1]), minTickets);
       }
 
-      match = opts.parameters.match(/-max (\d+)/);
-      if (!_.isNil(match)) {
-        maxTickets = match[1];
+      const matchMax = opts.parameters.match(/-max (\d+)/);
+      if (!_.isNil(matchMax)) {
+        maxTickets = Number(matchMax[1]);
       }
     }
 
@@ -303,7 +302,7 @@ class Raffles extends System {
   }
 
   @parser()
-  async participate (opts) {
+  async participate (opts: ParserOptions): Promise<boolean> {
     if (_.isNil(opts.sender) || _.isNil(opts.sender.username) || !opts.message.match(/^(![\S]+)/)) {
       return true;
     }

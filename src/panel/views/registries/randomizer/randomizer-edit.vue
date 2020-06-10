@@ -51,10 +51,10 @@
 
     loading(v-if="state.loading !== $state.success")
     b-form(v-else)
-      b-form-group(
-        :label="translate('registry.randomizer.form.name')"
-        label-for="name"
-      _)
+      b-form-group
+        label(for="name")
+          | {{ translate('registry.randomizer.form.name') }}
+          span.text-warning  *
         b-input-group
           b-form-input(
             id="name"
@@ -118,68 +118,7 @@
             div(style="width: 3rem;") {{ item.tickVolume + '%' }}
 
       tts(:tts.sync="item.tts" :uuid="item.id")
-
-      b-card(:header="translate('registry.goals.fontSettings')")
-        b-card-text
-          b-form-group
-            label(for="font_selector") {{ translate('registry.goals.input.fonts.title') }}
-            b-form-select(v-model="item.customizationFont.family" id="font_selector")
-              option(v-for="font of fonts" :value="font.text" :key="font.text") {{font.text}}
-            small(v-html="translate('registry.goals.input.fonts.help')").form-text.text-muted
-
-          b-row.py-3
-            b-col(cols="3")
-              b-form-group
-                label(for="fonts_size_input") {{ translate('registry.goals.input.fontSize.title') }}
-                b-input(
-                  v-model.number="item.customizationFont.size"
-                  type="number" :min="1" id="fonts_size_input"
-                  @input="$v.item.customizationFont.size.$touch()"
-                  :state="$v.item.customizationFont.size.$invalid && $v.item.customizationFont.size.$dirty ? false : null"
-                )
-                small.form-text.text-muted {{ translate('registry.goals.input.fontSize.help') }}
-                b-form-invalid-feedback(:state="!($v.item.customizationFont.size.$invalid && $v.item.customizationFont.size.$dirty)")
-                  template(v-if="!$v.item.customizationFont.size.minValue")
-                    | {{ translate('errors.minValue_of_value_is').replace('$value', 1) }}
-                  template(v-else)
-                    | {{ translate('dialog.errors.required') }}
-
-            b-col(cols="3")
-              b-form-group
-                label(for="fonts_borderPx_input") {{ translate('registry.goals.input.borderPx.title') }}
-                b-input(
-                  v-model.number="item.customizationFont.borderPx"
-                  type="number" :min="0" id="fonts_borderPx_input"
-                  @input="$v.item.customizationFont.borderPx.$touch()"
-                  :state="$v.item.customizationFont.borderPx.$invalid && $v.item.customizationFont.borderPx.$dirty ? false : null"
-                )
-                small.form-text.text-muted {{ translate('registry.goals.input.borderPx.help') }}
-                b-form-invalid-feedback(:state="!($v.item.customizationFont.borderPx.$invalid && $v.item.customizationFont.borderPx.$dirty)")
-                  template(v-if="!$v.item.customizationFont.borderPx.minValue")
-                    | {{ translate('errors.minValue_of_value_is').replace('$value', 0) }}
-                  template(v-else)
-                    | {{ translate('dialog.errors.required') }}
-
-            b-col(cols="6")
-              b-form-group
-                b-row.px-3
-                  label(for="fonts_border_color_input").w-100 {{ translate('registry.goals.input.borderColor.title') }}
-                  b-input(
-                    class="col-10"
-                    v-model.trim="item.customizationFont.borderColor"
-                    type="text"
-                    @input="$v.item.customizationFont.borderColor.$touch()"
-                    :state="$v.item.customizationFont.borderColor.$invalid && $v.item.customizationFont.borderColor.$dirty ? false : null"
-                  )
-                  b-input(
-                    class="col-2"
-                    v-model.trim="item.customizationFont.borderColor"
-                    type="color" id="fonts_border_color_input"
-                    @input="$v.item.customizationFont.borderColor.$touch()"
-                    :state="$v.item.customizationFont.borderColor.$invalid && $v.item.customizationFont.borderColor.$dirty ? false : null"
-                  )
-                  b-form-invalid-feedback( :state="!($v.item.customizationFont.borderColor.$invalid && $v.item.customizationFont.borderColor.$dirty)")
-                    | {{ translate('errors.invalid_format') }}
+      font(:data.sync="item.customizationFont" key="randomizer-font")
 
       b-card(no-body).mt-2
         b-card-header
@@ -197,16 +136,22 @@
               )
             template(v-slot:cell(color)="data")
               b-row.m-0
-                b-input(
-                  class="col-10"
-                  v-model.trim="data.item.color"
-                  type="text"
-                )
-                b-input(
-                  class="col-2"
-                  v-model.trim="data.item.color"
-                  type="color"
-                )
+                b-input-group.col-12
+                  b-input-group-prepend
+                    b-button(
+                      variant="append"
+                      @click="data.item.color = getRandomColor()"
+                    )
+                      fa(icon="dice")
+                  b-input(
+                    v-model.trim="data.item.color"
+                    type="text"
+                  ).border-left-0
+                  b-input-group-append(style="min-width: 40px;")
+                    b-input(
+                      v-model.trim="data.item.color"
+                      type="color"
+                    )
             template(v-slot:cell(numOfDuplicates)="data")
               b-input(
                 v-if="!data.item.groupId"
@@ -264,12 +209,16 @@
 <script lang="ts">
 import { Vue, Component, Watch } from 'vue-property-decorator';
 
+import { Route } from 'vue-router'
+import { NextFunction } from 'express';
+
 import { Validations } from 'vuelidate-property-decorators';
-import { required, minLength, minValue } from 'vuelidate/lib/validators';
+import { required, minValue } from 'vuelidate/lib/validators';
 import { cloneDeep, isEqual } from 'lodash-es';
 
 import { getSocket } from 'src/panel/helpers/socket';
 import type { RandomizerInterface, RandomizerItemInterface } from 'src/bot/database/entity/randomizer';
+import type { PermissionsInterface } from 'src/bot/database/entity/permissions';
 import { v4 as uuid } from 'uuid';
 import { permission } from 'src/bot/helpers/permissions';
 import { getRandomColor, getContrastColor } from 'src/panel/helpers/color';
@@ -287,10 +236,11 @@ Component.registerHooks([
 @Component({
   components: {
     tts: () => import('../alerts/components/tts.vue'),
+    font: () => import('src/panel/components/font.vue'),
     loading: () => import('../../../components/loading.vue'),
   },
   filters: {
-    capitalize(value) {
+    capitalize(value: string) {
       if (!value) return ''
       value = value.toString()
       return value.charAt(0).toUpperCase() + value.slice(1)
@@ -298,6 +248,7 @@ Component.registerHooks([
   }
 })
 export default class randomizerEdit extends Vue {
+  getRandomColor = getRandomColor;
   getContrastColor = getContrastColor;
   psocket: SocketIOClient.Socket = getSocket('/core/permissions');
   socket: SocketIOClient.Socket =  getSocket('/registries/randomizer');
@@ -344,6 +295,7 @@ export default class randomizerEdit extends Vue {
     },
     customizationFont: {
       family: 'PT Sans',
+      weight: 500,
       size: 16,
       borderColor: '#000000',
       borderPx: 1,
@@ -357,16 +309,14 @@ export default class randomizerEdit extends Vue {
         required,
       },
       command: {
-        required,
-        sw: (value) => value.startsWith('!'),
-        minLength: minLength(2),
+        ifExistsMustBe: (value: string) => value.length === 0 || (value.startsWith('!') && value.length > 2),
       },
       permissionId: {
-        mustBeExisting: (value) => !!this.getPermissionName(value),
+        mustBeExisting: (value: string) => !!this.getPermissionName(value),
       },
       customizationFont: {
         borderColor: {
-          isColor: (value) => !!value.match(/^(#{1})([0-9A-F]{8}|[0-9A-F]{6})$/ig),
+          isColor: (value: string) => !!value.match(/^(#{1})([0-9A-F]{8}|[0-9A-F]{6})$/ig),
         },
         size: {
           required,
@@ -386,7 +336,7 @@ export default class randomizerEdit extends Vue {
     items = items.filter(o => o.numOfDuplicates > 0);
 
 
-    const countGroupItems = (item: RandomizerItemInterface, count = 0) => {
+    const countGroupItems = (item: RandomizerItemInterface, count = 0): number => {
       const child = items.find(o => o.groupId === item.id);
       if (child) {
         return countGroupItems(child, count + 1);
@@ -431,7 +381,7 @@ export default class randomizerEdit extends Vue {
     }
   }
 
-  beforeRouteUpdate(to, from, next) {
+  beforeRouteUpdate(to: Route, from: Route, next: NextFunction) {
     if (this.pending) {
       const isOK = confirm('You will lose your pending changes. Do you want to continue?')
       if (!isOK) {
@@ -444,7 +394,7 @@ export default class randomizerEdit extends Vue {
     }
   }
 
-  beforeRouteLeave(to, from, next) {
+  beforeRouteLeave(to: Route, from: Route, next: NextFunction) {
     if (this.pending) {
       const isOK = confirm('You will lose your pending changes. Do you want to continue?')
       if (!isOK) {
@@ -457,7 +407,7 @@ export default class randomizerEdit extends Vue {
     }
   }
 
-  getPermissionName(id) {
+  getPermissionName(id: string | null) {
     if (!id) return null
     const permission = this.permissions.find((o) => {
       return o.id === id
@@ -486,7 +436,7 @@ export default class randomizerEdit extends Vue {
     })
   }
 
-  rmOption(id) {
+  rmOption(id: string) {
     this.item.items = this.item.items.filter(o => o.id !== id);
     for (const item of this.item.items.filter(o => o.groupId !== id)) {
       item.groupId = null;
@@ -494,7 +444,7 @@ export default class randomizerEdit extends Vue {
   }
 
   del() {
-    this.socket.emit('randomizer::remove', this.item, (err) => {
+    this.socket.emit('randomizer::remove', this.item, (err: string | null) => {
       if (err) {
         console.error(err);
       } else {
@@ -527,7 +477,7 @@ export default class randomizerEdit extends Vue {
       await new Promise((resolve) => {
         this.item.isShown = this.isShown;
         console.debug('Saving randomizer', this.item);
-        this.socket.emit('randomizer::save', this.item, (err, data) => {
+        this.socket.emit('randomizer::save', this.item, (err: Error | null) => {
           if (err) {
             this.state.save = this.$state.fail;
             this.$bvToast.toast(err.message, {
@@ -555,12 +505,16 @@ export default class randomizerEdit extends Vue {
     await Promise.all([
       new Promise(async (done) => {
         if (this.$route.params.id) {
-          this.socket.emit('randomizer::getOne', this.$route.params.id, (err, d: Required<RandomizerInterface>) => {
+          this.socket.emit('generic::getOne', this.$route.params.id, (err: string | null, d: Required<RandomizerInterface>) => {
             if (err) {
               console.error(err);
               return;
             }
             if (Object.keys(d).length === 0) this.$router.push({ name: 'RandomizerRegistryList' })
+
+            // workaround for missing weight after https://github.com/sogehige/sogeBot/issues/3871
+            d.customizationFont.weight = d.customizationFont.weight ?? 500;
+
             this.item = d;
             this.isShown = d.isShown;
             this.$route.params.id = d.id;
@@ -588,13 +542,16 @@ export default class randomizerEdit extends Vue {
 
           request.send();
         })
-        this.fonts = response.items.map((o) => {
+        this.fonts = response.items.map((o: { family: string }) => {
           return { text: o.family, value: o.family }
         })
         done();
       }),
       new Promise(async(done) => {
-        this.psocket.emit('permissions', (data) => {
+        this.psocket.emit('permissions', (err: string | null, data: Readonly<Required<PermissionsInterface>>[]) => {
+        if(err) {
+          return console.error(err);
+        }
           this.permissions = data
           done();
         });
@@ -604,6 +561,3 @@ export default class randomizerEdit extends Vue {
   };
 }
 </script>
-
-<style scoped>
-</style>

@@ -17,6 +17,8 @@ import { Keyword } from '../database/entity/keyword';
 import customCommands from './customcommands';
 import { debug } from '../helpers/log';
 
+const cache: { id: string; cooldowns: CooldownInterface[] }[] = [];
+
 /*
  * !cooldown [keyword|!command] [global|user] [seconds] [true/false] - set cooldown for keyword or !command - 0 for disable, true/false set quiet mode
  * !cooldown toggle moderators [keyword|!command] [global|user]      - enable/disable specified keyword or !command cooldown for moderators
@@ -35,7 +37,7 @@ class Cooldown extends System {
 
   constructor () {
     super();
-    this.addMenu({ category: 'manage', name: 'cooldown', id: 'manage/cooldowns/list' });
+    this.addMenu({ category: 'manage', name: 'cooldown', id: 'manage/cooldowns/list', this: this });
   }
 
   sockets () {
@@ -47,11 +49,13 @@ class Cooldown extends System {
         cb(e.stack);
       }
     });
-    adminEndpoint(this.nsp, 'cooldown::deleteById', async (id, cb) => {
-      await getRepository(CooldownEntity).delete({ id });
-      cb();
+    adminEndpoint(this.nsp, 'generic::deleteById', async (id, cb) => {
+      await getRepository(CooldownEntity).delete({ id: String(id) });
+      if (cb) {
+        cb(null);
+      }
     });
-    adminEndpoint(this.nsp, 'cooldown::getAll', async (cb) => {
+    adminEndpoint(this.nsp, 'generic::getAll', async (cb) => {
       try {
         const cooldown = await getRepository(CooldownEntity).find({
           order: {
@@ -63,7 +67,7 @@ class Cooldown extends System {
         cb(e.stack);
       }
     });
-    adminEndpoint(this.nsp, 'cooldown::getById', async (id, cb) => {
+    adminEndpoint(this.nsp, 'generic::getOne', async (id, cb) => {
       try {
         const cooldown = await getRepository(CooldownEntity).findOne({
           where: { id },
@@ -107,7 +111,6 @@ class Cooldown extends System {
       miliseconds: parseInt(match.seconds, 10) * 1000,
       type: (match.type as 'global' | 'user'),
       timestamp: 0,
-      lastTimestamp: 0,
       isErrorMsgQuiet: _.isNil(match.quiet) ? false : !!match.quiet,
       isEnabled: true,
       isOwnerAffected: false,
@@ -157,9 +160,10 @@ class Cooldown extends System {
         const cooldown = await getRepository(CooldownEntity).findOne({ where: { name }, relations: ['viewers'] });
         if (!cooldown) { // command is not on cooldown -> recheck with text only
           const replace = new RegExp(`${XRegExp.escape(name)}`, 'ig');
-          opts.message = opts.message.replace(replace, '');
-          if (opts.message.length > 0) {
-            return this.check(opts);
+          const message = opts.message.replace(replace, '').trim();
+          if (message.length > 0 && opts.message !== message) {
+            debug('cooldown.check', `Command ${name} not on cooldown, checking: ${message}`);
+            return this.check({...opts, message});
           } else {
             return true;
           }
@@ -192,6 +196,8 @@ class Cooldown extends System {
         return true;
       }
       let result = false;
+
+      const affectedCooldowns: CooldownInterface[] = [];
       for (const cooldown of data) {
         if ((isOwner(opts.sender) && !cooldown.isOwnerAffected) || (user.isModerator && !cooldown.isModeratorAffected) || (user.isSubscriber && !cooldown.isSubscriberAffected) || (user.isFollower && !cooldown.isFollowerAffected)) {
           result = true;
@@ -218,15 +224,18 @@ class Cooldown extends System {
           if (cooldown.type === 'global') {
             await getRepository(CooldownEntity).save({
               ...cooldown,
-              lastTimestamp: timestamp,
               timestamp: now,
             });
           } else {
             debug('cooldown.check', `${opts.sender.username}#${opts.sender.userId} added to cooldown list.`);
             await getRepository(CooldownViewer).insert({
-              cooldown, userId: Number(opts.sender.userId), lastTimestamp: timestamp,  timestamp: now,
+              cooldown, userId: Number(opts.sender.userId), timestamp: now,
             });
           }
+          affectedCooldowns.push({
+            ...cooldown,
+            timestamp: now,
+          });
           result = true;
           continue;
         } else {
@@ -245,6 +254,12 @@ class Cooldown extends System {
           break; // disable _.each and updateQueue with false
         }
       }
+
+      // cache cooldowns - keep only latest 50
+      cache.push({ id: opts.id, cooldowns: affectedCooldowns });
+      while(cache.length > 50) {
+        cache.shift();
+      }
       return result;
     } catch (e) {
       return false;
@@ -253,101 +268,27 @@ class Cooldown extends System {
 
   @rollback()
   async cooldownRollback (opts: ParserOptions): Promise<boolean> {
-    // TODO: redundant duplicated code (search of cooldown), should be unified for check and cooldownRollback
-    let data: CooldownInterface[];
-
-    const [cmd, subcommand] = new Expects(opts.message)
-      .command({ optional: true })
-      .string({ optional: true })
-      .toArray();
-
-    if (!_.isNil(cmd)) { // command
-      let name = subcommand ? `${cmd} ${subcommand}` : cmd;
-      let isFound = false;
-
-      const parsed = await (new Parser().find(subcommand ? `${cmd} ${subcommand}` : cmd));
-      if (parsed) {
-        debug('cooldown.revert', `Command found ${parsed.command}`);
-        name = parsed.command;
-        isFound = true;
-      } else {
-        // search in custom commands as well
-        if (customCommands.enabled) {
-          const foundCommands = await customCommands.find(subcommand ? `${cmd} ${subcommand}` : cmd);
-          if (foundCommands.length > 0) {
-            name = foundCommands[0].command.command;
-            isFound = true;
-          }
-        }
-      }
-
-      if (!isFound) {
-        debug('cooldown.revert', `'${name}' not found, reverting to simple '${cmd}'`);
-        name = command; // revert to basic command if nothing was found
-      }
-
-
-      const cooldown = await getRepository(CooldownEntity).findOne({ where: { name }});
-      if (!cooldown) { // command is not on cooldown -> recheck with text only
-        const replace = new RegExp(`${XRegExp.escape(name)}`, 'ig');
-        opts.message = opts.message.replace(replace, '');
-        if (opts.message.length > 0) {
-          return this.cooldownRollback(opts);
+    const cached = cache.find(o => o.id === opts.id);
+    if (cached) {
+      for (const cooldown of cached.cooldowns) {
+        if (cooldown.type === 'global') {
+          cooldown.timestamp = 0; // we just revert to 0 as user were able to run it
         } else {
-          return true;
+          cooldown.viewers?.push({
+            timestamp: 0,
+            userId: Number(opts.sender.userId),
+            ...cooldown.viewers.find(o => o.userId === Number(opts.sender.userId)),
+          });
         }
+        // rollback timestamp
+        await getRepository(CooldownEntity).save(cooldown);
       }
-      data = [cooldown];
-    } else { // text
-      let [keywords, cooldowns] = await Promise.all([
-        getRepository(Keyword).find(),
-        getRepository(CooldownEntity).find({ relations: ['viewers'] }),
-      ]);
-
-      keywords = _.filter(keywords, function (o) {
-        return opts.message.toLowerCase().search(new RegExp('^(?!\\!)(?:^|\\s).*(' + _.escapeRegExp(o.keyword.toLowerCase()) + ')(?=\\s|$|\\?|\\!|\\.|\\,)', 'gi')) >= 0;
-      });
-
-      data = [];
-      _.each(keywords, (keyword) => {
-        const cooldown = _.find(cooldowns, (o) => o.name.toLowerCase() === keyword.keyword.toLowerCase());
-        if (keyword.enabled && cooldown) {
-          data.push(cooldown);
-        }
-      });
     }
-    if (!_.some(data, { isEnabled: true })) { // parse ok if all cooldowns are disabled
-      return true;
-    }
-
-    const user = await getRepository(User).findOne({ userId: Number(opts.sender.userId) });
-    if (!user) {
-      return true;
-    }
-
-    for (const cooldown of data) {
-      if ((isOwner(opts.sender) && !cooldown.isOwnerAffected) || (user.isModerator && !cooldown.isModeratorAffected) || (user.isSubscriber && !cooldown.isSubscriberAffected) || (user.isFollower && !cooldown.isFollowerAffected)) {
-        continue;
-      }
-
-      if (cooldown.type === 'global') {
-        cooldown.lastTimestamp = cooldown.lastTimestamp ?? 0;
-        cooldown.timestamp = cooldown.lastTimestamp ?? 0;
-      } else {
-        cooldown.viewers?.push({
-          lastTimestamp: 0,
-          timestamp: 0,
-          userId: Number(opts.sender.userId),
-          ...cooldown.viewers.find(o => o.userId === Number(opts.sender.userId)),
-        });
-      }
-      // rollback to lastTimestamp
-      await getRepository(CooldownEntity).save(cooldown);
-    }
+    cache.splice(cache.findIndex(o => o.id === opts.id), 1);
     return true;
   }
 
-  async toggle (opts: CommandOptions, type: string) {
+  async toggle (opts: CommandOptions, type: 'isEnabled' | 'isModeratorAffected' | 'isOwnerAffected' | 'isSubscriberAffected' | 'isFollowerAffected' | 'isErrorMsgQuiet' | 'type') {
     const match = XRegExp.exec(opts.parameters, constants.COOLDOWN_REGEXP) as unknown as { [x: string]: string } | null;
 
     if (_.isNil(match)) {

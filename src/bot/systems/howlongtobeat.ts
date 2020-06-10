@@ -4,7 +4,7 @@ import * as constants from '../constants';
 import System from './_interface';
 import { command, default_permission } from '../decorators';
 import { permission } from '../helpers/permissions';
-import { HowLongToBeatService /*, HowLongToBeatEntry */ } from 'howlongtobeat';
+import { HowLongToBeatService } from 'howlongtobeat';
 import Expects from '../expects';
 import { prepare } from '../commons';
 
@@ -20,7 +20,7 @@ class HowLongToBeat extends System {
 
   constructor() {
     super();
-    this.addMenu({ category: 'manage', name: 'howlongtobeat', id: 'manage/hltb' });
+    this.addMenu({ category: 'manage', name: 'howlongtobeat', id: 'manage/hltb', this: this });
 
     if (isMainThread) {
       this.refreshImageThumbnail();
@@ -33,17 +33,16 @@ class HowLongToBeat extends System {
   }
 
   sockets() {
-    adminEndpoint(this.nsp, 'hltb::getAll', async (opts, cb) => {
+    adminEndpoint(this.nsp, 'generic::getAll::filter', async (opts: HowLongToBeatGameInterface, cb) => {
       try {
         cb(null, await getRepository(HowLongToBeatGame).find({...opts}));
       } catch (e) {
         cb(e.stack, []);
       }
     });
-    adminEndpoint(this.nsp, 'hltb::save', async (dataset: HowLongToBeatGameInterface, cb) => {
+    adminEndpoint(this.nsp, 'hltb::save', async (item, cb) => {
       try {
-        const item = await getRepository(HowLongToBeatGame).save(dataset);
-        cb(null, item);
+        cb(null, await getRepository(HowLongToBeatGame).save(item));
       } catch (e) {
         cb(e.stack);
       }

@@ -109,7 +109,6 @@ export default {
   data: function () {
     return {
       sortBy,
-      items: [],
       dashboards: [],
 
       dashboardName: '',
@@ -122,18 +121,33 @@ export default {
       socket: getSocket('/')
     }
   },
-  mounted() {
-    this.isLoaded = false;
-    this.socket.emit('panel::dashboards', Number(this.$loggedUser.id), 'admin', (err, dashboards) => {
-      if (err) {
-        return console.error(err);
-      }
-      this.mainDashboard = dashboards[0].id
-      this.currentDashboard = dashboards[0].id;
-      this.dashboards = dashboards;
-      this.refreshWidgets();
-      this.isLoaded = true;
-    });
+  async mounted() {
+    this.isLoaded = await Promise.race([
+      new Promise(resolve => {
+        this.socket.emit('panel::dashboards', { userId: Number(this.$loggedUser.id), type: 'admin' }, (err, dashboards) => {
+          console.groupCollapsed('dashboard::panel::dashboards');
+          console.log({err, dashboards});
+          console.groupEnd();
+          if (err) {
+            return console.error(err);
+          }
+          this.mainDashboard = dashboards[0].id
+          this.currentDashboard = dashboards[0].id;
+          for (const item of dashboards) {
+            this.dashboards.push(item);
+          }
+          this.refreshWidgets();
+          resolve(true);
+        });
+      }),
+      new Promise(resolve => {
+        setTimeout(() => resolve(false), 4000);
+      }),
+    ]);
+    if (!this.isLoaded) {
+      console.error('panel::dashboards not loaded, refreshing page')
+      location.reload();
+    }
 
     EventBus.$on('remove-widget', (id) => {
       this.removeWidget(id);
@@ -184,7 +198,7 @@ export default {
       this.refreshWidgets();
     },
     addWidget: function () {
-      this.socket.emit('panel::dashboards', Number(this.$loggedUser.id), 'admin', (err, dashboards) => {
+      this.socket.emit('panel::dashboards', { userId: Number(this.$loggedUser.id), type: 'admin' }, (err, dashboards) => {
         if (err) {
           return console.error(err);
         }
@@ -194,7 +208,7 @@ export default {
       });
     },
     createDashboard: function () {
-      this.socket.emit('panel::dashboards::create', Number(this.$loggedUser.id), this.dashboardName, (err, created) => {
+      this.socket.emit('panel::dashboards::create', { userId: Number(this.$loggedUser.id), name: this.dashboardName }, (err, created) => {
         if (err) {
           return console.error(err);
         }

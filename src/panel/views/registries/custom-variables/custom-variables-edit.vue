@@ -131,6 +131,7 @@
           <b-form-group
             :label="translate('registry.customvariables.response.name')"
             label-for="response"
+            v-if="selectedType !== 'eval'"
           >
             <button :class="[responseType === 0 ? 'btn-primary' : 'btn-outline-primary']" type="button" class="btn" @click="responseType = 0; responseText = ''">{{ translate('registry.customvariables.response.default') }}</button>
             <button :class="[responseType === 1 ? 'btn-primary' : 'btn-outline-primary']" type="button" class="btn" @click="responseType = 1; responseText = ''">{{ translate('registry.customvariables.response.custom') }}</button>
@@ -288,6 +289,12 @@ import { chunk, orderBy, get } from 'lodash-es';
 import { v4 as uuid } from 'uuid';
 import { getSocket } from 'src/panel/helpers/socket';
 
+import { Route } from 'vue-router'
+import { NextFunction } from 'express';
+
+import type { PermissionsInterface } from 'src/bot/database/entity/permissions';
+import type { VariableInterface } from 'src/bot/database/entity/variable';
+
 import { codemirror } from 'vue-codemirror';
 import 'codemirror/lib/codemirror.css';
 
@@ -308,7 +315,7 @@ const State: State = { IDLE: 0, PROGRESS: 1, DONE: 2, ERROR: 3 }
     codemirror,
   },
   filters: {
-    capitalize: function (value) {
+    capitalize: function (value: string) {
       if (!value) return ''
       value = value.toString()
       return value.charAt(0).toUpperCase() + value.slice(1)
@@ -386,7 +393,10 @@ export default class customVariablesEdit extends Vue {
     this.state.loaded = false;
     await Promise.all([
       new Promise(resolve => {
-        this.psocket.emit('permissions', (data) => {
+        this.psocket.emit('permissions', (err: string, data: Readonly<Required<PermissionsInterface>>[]) => {
+          if(err) {
+            return console.error(err);
+          }
           this.permissions = orderBy(data, 'order', 'asc')
 
           if (!this.$route.params.id) {
@@ -399,7 +409,10 @@ export default class customVariablesEdit extends Vue {
       }),
       new Promise(resolve => {
         if (this.$route.params.id) {
-          this.socket.emit('load', this.$route.params.id, (data) => {
+          this.socket.emit('generic::getOne', this.$route.params.id, (err: string | null, data: Readonly<Required<VariableInterface>>) => {
+            if (err) {
+              return console.error(err);
+            }
             this.variableName = data.variableName;
             this.description = data.description;
             this.currentValue = data.currentValue;
@@ -411,7 +424,7 @@ export default class customVariablesEdit extends Vue {
             this.responseType = data.responseType;
             this.responseText = data.responseText;
             this.urls = data.urls || [];
-            this.permission = data.permission || 0;
+            this.permission = data.permission;
             this.readOnly = data.readOnly || false;
             this.history = chunk(orderBy(data.history, 'changedAt', 'desc'), 15)[0] || [];
             resolve();
@@ -424,7 +437,7 @@ export default class customVariablesEdit extends Vue {
     this.state.loaded = true;
   }
 
-  beforeRouteUpdate(to, from, next) {
+  beforeRouteUpdate(to: Route, from: Route, next: NextFunction) {
     if (this.pending) {
       const isOK = confirm('You will lose your pending changes. Do you want to continue?')
       if (!isOK) {
@@ -437,7 +450,7 @@ export default class customVariablesEdit extends Vue {
     }
   }
 
-  beforeRouteLeave(to, from, next) {
+  beforeRouteLeave(to: Route, from: Route, next: NextFunction) {
     if (this.pending) {
       const isOK = confirm('You will lose your pending changes. Do you want to continue?')
       if (!isOK) {
@@ -482,7 +495,7 @@ export default class customVariablesEdit extends Vue {
 
   @Watch('selectedType')
   @Watch('usableOptionsArray')
-  setDefaultValue(value) {
+  setDefaultValue(value: string) {
     if (this.selectedType === 'options') {
       if (!this.usableOptionsArray.includes(this.currentValue)) {
         this.currentValue = this.usableOptionsArray.length > 0 ? this.usableOptionsArray[0] : ''
@@ -511,11 +524,11 @@ export default class customVariablesEdit extends Vue {
     });
   }
 
-  removeURL(id) {
+  removeURL(id: string) {
     this.urls = this.urls.filter(o => o.id !== id);
   }
 
-  getPermissionName(id) {
+  getPermissionName(id: string | null) {
     if (!id) return 'Disabled'
     const permission = this.permissions.find((o) => {
       return o.id === id
@@ -533,7 +546,7 @@ export default class customVariablesEdit extends Vue {
 
   testScript () {
     this.state.test = State.PROGRESS;
-    this.socket.emit('customvariables::testScript', { evalValue: this.evalValue, currentValue: this.currentValue }, (err, response) => {
+    this.socket.emit('customvariables::testScript', { evalValue: this.evalValue, currentValue: this.currentValue }, (err: string | null, response: string) => {
       if (err) {
         this.evalError = err;
       } else {
@@ -546,7 +559,7 @@ export default class customVariablesEdit extends Vue {
 
   async remove () {
     await new Promise(resolve => {
-      this.socket.emit('delete', this.$route.params.id, () => {
+      this.socket.emit('customvariables::delete', this.$route.params.id, () => {
         resolve();
       })
     })
@@ -560,7 +573,7 @@ export default class customVariablesEdit extends Vue {
       await Promise.all([
         // check if variable name is unique
         new Promise((resolve, reject) => {
-          this.socket.emit('customvariables::isUnique', { variable: this.variableName, id: this.$route.params.id }, (err, isUnique) => {
+          this.socket.emit('customvariables::isUnique', { variable: this.variableName, id: this.$route.params.id }, (err: string | null, isUnique: boolean) => {
             if (!isUnique) {
               reject(this.translate('registry.customvariables.variable.error.isNotUnique'))
             }
@@ -600,7 +613,7 @@ export default class customVariablesEdit extends Vue {
         responseText: this.responseText,
         permission: this.permission
       }
-      this.socket.emit('save', data, (err, id) => {
+      this.socket.emit('customvariables::save', data, (err: string | null, id: string) => {
         if (err) {
           console.error(err)
           return this.state.save = State.ERROR

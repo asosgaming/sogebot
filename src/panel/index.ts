@@ -7,6 +7,8 @@ import Vue from 'vue';
 import VueMoment from 'vue-moment';
 import VueRouter from 'vue-router';
 import Vuelidate from 'vuelidate';
+
+// eslint-disable-next-line
 import LoadScript from 'vue-plugin-load-script';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -37,7 +39,7 @@ import { isUserLoggedIn } from './helpers/isUserLoggedIn';
 import translate from './helpers/translate';
 import urlParam from './helpers/urlParam';
 import { getListOf } from './helpers/getListOf';
-import { getConfiguration, getTranslations, redirectLogin, waitForAuthorizationSocket } from './helpers/socket';
+import { getConfiguration, getTranslations } from './helpers/socket';
 
 library.add(faRedoAlt, faDice, faVolumeOff, faGripVertical, faImage, faUpload, faCircle2, faCaretRight, faTasks, faCaretDown, faSlash, faFilter, faToggleOn, faToggleOff, faBell, faShareSquare, faExclamationCircle, faQuestion, faVial, faEquals, faGreaterThanEqual, faLongArrowAltLeft, faBan, faPlusSquare, faMusic, faList, faPlay, faPause, faForward, faSpotify, faMoneyBillAlt, faPlus, faSpinner, faGift, faHeadphones, faTh, faDollarSign, faSignInAlt, faSignOutAlt, faUsers, faMusic, faCalendar, faTwitter, faCheck, faMusic, faMusic, faVolumeUp, faVolumeDown, faUsers, faGift, faTrophy, faCog, faExternalLinkAlt, faTrash, faPlus, faSync, faComments, faTwitch, faCircle, faCheckCircle, faLock, faUsers, faUser, faCheck, faTimes, faHeart, faStar, faLockOpen, faHandPointer, faRandom, faEyeSlash, faSignOutAlt, faSignInAlt, faBoxOpen, faEye, faCog, faExternalLinkAlt, faHeart, faTv, faRandom, faGem, faStar, faGift, faDollarSign, faStarHalf, faLongArrowAltRight, faCircleNotch, faCalendar, faDollarSign, faCog, faCode, faAngleUp, faTrashAlt, faAngleDown, faFont, faPlus, faMinus, faDownload, faDollarSign, faTerminal, faCog, faCommentAlt, faUsers, faExternalLinkAlt, faSyncAlt, faClock, faCog, faInfinity, faTrophy, faClone, faGem, faCoins, faExclamation, faStop, faBan, faSpinner, faCheck, faAngleRight, faPlus, faEdit, faEraser, faLink, faTrash, faPlus, faCaretLeft, faExternalLinkAlt, faLink, faSave, faThLarge, faThList, faSearch, faCircleNotch, faCheck, faEllipsisH, faEllipsisV, faPowerOff);
 Vue.component('fa', FontAwesomeIcon);
@@ -74,9 +76,6 @@ declare module 'vue/types/vue' {
     }[];
     $core: {
       name: string;
-      enabled: boolean;
-      areDependenciesEnabled: boolean;
-      isDisabledByEnv: boolean;
     }[];
     $integrations: {
       name: string;
@@ -91,18 +90,10 @@ Vue.use(VueRouter);
 
 const main = async () => {
   // init prototypes
-  Vue.prototype.translate = (v) => translate(v);
-  Vue.prototype.urlParam = (v) => urlParam(v);
-
-  /* force first authorize */
-  try {
-    await waitForAuthorizationSocket('/');
-  } catch (e) {
-    console.error(e);
-    redirectLogin();
-    return;
-  }
+  Vue.prototype.translate = (v: string) => translate(v);
+  Vue.prototype.urlParam = (v: string) => urlParam(v);
   Vue.prototype.$loggedUser = await isUserLoggedIn();
+
   if (Vue.prototype.$loggedUser !== false) {
     await getTranslations();
     Vue.prototype.configuration = await getConfiguration();
@@ -201,11 +192,11 @@ const main = async () => {
         return object;
       },
       created() {
-        this.$root.$on('bv::dropdown::show', bvEvent => {
+        this.$root.$on('bv::dropdown::show', (bvEvent: Bootstrap.DropdownsEventHandler<HTMLElement>) => {
           this.dropdownShow(bvEvent);
         });
 
-        this.$root.$on('bv::dropdown::hidden', bvEvent => {
+        this.$root.$on('bv::dropdown::hidden', (bvEvent: Bootstrap.DropdownsEventHandler<HTMLElement>) => {
           this.dropdownHide();
 
           // force unfocus
@@ -218,10 +209,12 @@ const main = async () => {
         this.$moment.locale(get(Vue, 'prototype.configuration.lang', 'en'));
       },
       methods: {
-        clickEvent(event) {
-          if ((typeof event.target.className !== 'string' || !event.target.className.includes('dropdown')) && !this.isDropdownHidden) {
-            console.debug('Clicked outside dropdown', event.target);
-            this.dropdownHide();
+        clickEvent(event: MouseEvent) {
+          if (event.target) {
+            if ((typeof (event.target as HTMLElement).className !== 'string' || !(event.target as HTMLElement).className.includes('dropdown')) && !this.isDropdownHidden) {
+              console.debug('Clicked outside dropdown', event.target);
+              this.dropdownHide();
+            }
           }
         },
         dropdownHide() {
@@ -231,7 +224,7 @@ const main = async () => {
             this.isDropdownHidden = true;
           }
         },
-        dropdownShow(bvEvent, retry = 0) {
+        dropdownShow(bvEvent: Bootstrap.DropdownsEventHandler<HTMLElement>) {
           if (!this.isDropdownHidden) {
             this.dropdownHide();
           }
@@ -239,11 +232,11 @@ const main = async () => {
           this.isDropdownHidden = false;
           const child = bvEvent.target;
           child.style.position = 'absolute';
-          child.style['z-index'] = 99999999;
+          child.style.zIndex = '99999999';
           child.remove();
           document.getElementsByTagName('BODY')[0].appendChild(child);
           this.dropdown = child;
-          this.dropdownVue = bvEvent.vueTarget;
+          this.dropdownVue = (bvEvent as any).vueTarget;
           this.dropdownVue.show();
         },
       },

@@ -37,6 +37,9 @@
   import { getSocket } from '../../helpers/socket';
   import { v4 as uuid } from 'uuid';
 
+  import { Route } from 'vue-router'
+  import { NextFunction } from 'express';
+
   import { library } from '@fortawesome/fontawesome-svg-core'
   import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
   library.add(faExclamationTriangle)
@@ -62,7 +65,7 @@
       }
       return object
     },
-    beforeRouteUpdate(to, from, next) {
+    beforeRouteUpdate(to: Route, from: Route, next: NextFunction) {
       if (this.pending) {
         const isOK = confirm('You will lose your pending changes. Do you want to continue?')
         if (!isOK) {
@@ -74,7 +77,7 @@
         next();
       }
     },
-    beforeRouteLeave(to, from, next) {
+    beforeRouteLeave(to: Route, from: Route, next: NextFunction) {
       if (this.pending) {
         const isOK = confirm('You will lose your pending changes. Do you want to continue?')
         if (!isOK) {
@@ -93,7 +96,10 @@
     },
     methods: {
       addNewPermissionGroup() {
-        this.socket.emit('permissions', async (p: PermissionsInterface[]) => {
+        this.socket.emit('permissions', async (err: string | null, p: PermissionsInterface[]) => {
+          if (err) {
+            return console.error(err);
+          }
           const id = uuid();
           const data: PermissionsInterface = {
             id,
@@ -108,7 +114,7 @@
 
           // first we need to set last order for viewers
           await new Promise(resolve => {
-            this.socket.emit('permission::update::order', permission.VIEWERS, p.length + 1, () => {
+            this.socket.emit('permission::update::order', { id: permission.VIEWERS, order: p.length + 1 }, () => {
               resolve();
             });
           })

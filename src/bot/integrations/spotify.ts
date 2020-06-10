@@ -15,6 +15,11 @@ import { adminEndpoint } from '../helpers/socket';
 import api from '../api';
 import { addUIError } from '../panel';
 import { HOUR } from '../constants';
+import { ioServer } from '../helpers/panel';
+
+type SpotifyTrack = {
+  uri: string; name: string; artists: { name: string }[]
+};
 
 /*
  * How to integrate:
@@ -88,7 +93,7 @@ class Spotify extends Integration {
     type: 'btn-emit',
     class: 'btn btn-primary btn-block mt-1 mb-1',
     if: () => _spotify.username.length === 0,
-    emit: 'authorize',
+    emit: 'spotify::authorize',
   }, 'connection')
   authorizeBtn = null;
 
@@ -96,7 +101,7 @@ class Spotify extends Integration {
     type: 'btn-emit',
     class: 'btn btn-primary btn-block mt-1 mb-1',
     if: () => _spotify.username.length > 0,
-    emit: 'revoke',
+    emit: 'spotify::revoke',
   }, 'connection')
   revokeBtn = null;
 
@@ -335,10 +340,11 @@ class Spotify extends Integration {
           const data = await this.client.refreshAccessToken();
           this.client.setAccessToken(data.body.access_token);
           this.retry.IRefreshToken = 0;
-          info(chalk.yellow('SPOTIFY: ') + 'Access token refreshed OK');
+          ioServer?.emit('api.stats', { data: data.body, timestamp: Date.now(), call: 'spotify::refreshToken', api: 'other', endpoint: 'n/a', code: 200 });
         }
       } catch (e) {
         this.retry.IRefreshToken++;
+        ioServer?.emit('api.stats', { data: e.message, timestamp: Date.now(), call: 'spotify::refreshToken', api: 'other', endpoint: 'n/a', code: 500 });
         info(chalk.yellow('SPOTIFY: ') + 'Refreshing access token failed ' + (this.retry.IRefreshToken > 0 ? 'retrying #' + this.retry.IRefreshToken : ''));
       }
     }
@@ -350,14 +356,14 @@ class Spotify extends Integration {
   }
 
   sockets () {
-    adminEndpoint(this.nsp, 'state', async (callback) => {
+    adminEndpoint(this.nsp, 'spotify::state', async (callback) => {
       callback(null, this.state);
     });
-    adminEndpoint(this.nsp, 'skip', async (callback) => {
+    adminEndpoint(this.nsp, 'spotify::skip', async (callback) => {
       this.skipToNextSong = true;
       callback(null);
     });
-    adminEndpoint(this.nsp, 'code', async (token, callback) => {
+    adminEndpoint(this.nsp, 'spotify::code', async (token, cb) => {
       const waitForUsername = () => {
         return new Promise((resolve, reject) => {
           const check = async () => {
@@ -382,9 +388,9 @@ class Spotify extends Integration {
       this.currentSong = JSON.stringify({});
       this.connect({ token });
       await waitForUsername();
-      callback(null, true);
+      cb(null, true);
     });
-    adminEndpoint(this.nsp, 'revoke', async (cb) => {
+    adminEndpoint(this.nsp, 'spotify::revoke', async (cb) => {
       clearTimeout(this.timeouts.IRefreshToken);
       try {
         if (this.client !== null) {
@@ -408,7 +414,7 @@ class Spotify extends Integration {
         this.timeouts.IRefreshToken = global.setTimeout(() => this.IRefreshToken(), 60000);
       }
     });
-    adminEndpoint(this.nsp, 'authorize', async (cb) => {
+    adminEndpoint(this.nsp, 'spotify::authorize', async (cb) => {
       if (
         this.clientId === ''
         || this.clientSecret === ''
@@ -546,7 +552,7 @@ class Spotify extends Integration {
             'Authorization': 'Bearer ' + this.client.getAccessToken(),
           },
         });
-        const track = response.data;
+        const track = response.data as SpotifyTrack;
         this.uris.push({
           uri: 'spotify:track:' + id,
           requestBy: opts.sender.username,
@@ -566,7 +572,7 @@ class Spotify extends Integration {
             'Content-Type': 'application/json',
           },
         });
-        const track = response.data.tracks.items[0];
+        const track = (response.data.tracks.items[0] as SpotifyTrack);
         this.uris.push({
           uri: track.uri,
           requestBy: opts.sender.username,

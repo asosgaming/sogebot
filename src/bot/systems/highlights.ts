@@ -16,6 +16,7 @@ import api from '../api';
 import oauth from '../oauth';
 import { translate } from '../translate';
 import { ioServer } from '../helpers/panel';
+import { getBotSender } from '../commons';
 
 const ERROR_STREAM_NOT_ONLINE = '1';
 const ERROR_MISSING_TOKEN = '2';
@@ -32,22 +33,24 @@ class Highlights extends System {
 
   constructor() {
     super();
-    this.addMenu({ category: 'manage', name: 'highlights', id: 'manage/highlights' });
+    this.addMenu({ category: 'manage', name: 'highlights', id: 'manage/highlights', this: this });
   }
 
   public sockets() {
     adminEndpoint(this.nsp, 'highlight', () => {
-      this.main({ parameters: '', sender: null });
+      this.main({ parameters: '', sender: getBotSender(), attr: {}, command: '!highlight', createdAt: Date.now() });
     });
-    adminEndpoint(this.nsp, 'highlights::getAll', async (cb) => {
+    adminEndpoint(this.nsp, 'generic::getAll', async (cb) => {
       try {
         cb(null, await getRepository(Highlight).find({ order: { createdAt: 'DESC' } }));
       } catch (e) {
         cb(e.stack);
       }
     });
-    adminEndpoint(this.nsp, 'highlights::deleteById', async (id, cb) => {
-      await getRepository(Highlight).delete({ id });
+    adminEndpoint(this.nsp, 'generic::deleteById', async (id, cb) => {
+      if (typeof id === 'number') {
+        await getRepository(Highlight).delete({ id });
+      }
       cb(null);
     });
   }
@@ -68,7 +71,7 @@ class Highlights extends System {
             }
           }
           if (url.highlight) {
-            this.main({ parameters: '', sender: null });
+            this.main({ parameters: '', sender: getBotSender(), attr: {}, command: '!highlight', createdAt: Date.now() });
           }
           return res.status(200).send({ ok: true });
         }
@@ -80,7 +83,7 @@ class Highlights extends System {
 
   @command('!highlight')
   @default_permission(permission.CASTERS)
-  public async main(opts): Promise<CommandResponse[]> {
+  public async main(opts: CommandOptions): Promise<CommandResponse[]> {
     const token = oauth.botAccessToken;
     const cid = oauth.channelId;
     const url = `https://api.twitch.tv/helix/videos?user_id=${cid}&type=archive&first=1`;
@@ -131,7 +134,7 @@ class Highlights extends System {
     }
   }
 
-  public async add(highlight: HighlightInterface, timestamp, opts): Promise<CommandResponse[]> {
+  public async add(highlight: HighlightInterface, timestamp: TimestampObject, opts: CommandOptions): Promise<CommandResponse[]> {
     api.createMarker();
     getRepository(Highlight).insert(highlight);
     return [{ response: translate('highlights.saved')
@@ -142,7 +145,7 @@ class Highlights extends System {
 
   @command('!highlight list')
   @default_permission(permission.CASTERS)
-  public async list(opts): Promise<CommandResponse[]> {
+  public async list(opts: CommandOptions): Promise<CommandResponse[]> {
     const sortedHighlights = await getRepository(Highlight).find({
       order: {
         createdAt: 'DESC',

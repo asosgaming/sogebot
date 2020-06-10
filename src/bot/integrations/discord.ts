@@ -14,7 +14,7 @@ import { debounce } from '../helpers/debounce';
 import { v5 as uuidv5 } from 'uuid';
 import oauth from '../oauth';
 import Expects from '../expects';
-import { isUUID } from '../commons';
+import { isUUID, prepare } from '../commons';
 
 import { getRepository, IsNull, LessThan, Not } from 'typeorm';
 import { Permissions as PermissionsEntity } from '../database/entity/permissions';
@@ -50,7 +50,7 @@ class Discord extends Integration {
     type: 'btn-emit',
     class: 'btn btn-primary btn-block mt-1 mb-1',
     if: () => self.clientId.length > 0 && self.token.length > 0,
-    emit: 'authorize',
+    emit: 'discord::authorize',
   }, 'general')
   joinToServerBtn = null;
 
@@ -63,29 +63,51 @@ class Discord extends Integration {
 
   @settings('bot')
   @ui({
+    type: 'discord-guild',
+    if: () => self.clientId.length > 0 && self.token.length > 0,
+  })
+  guild = '';
+
+  @ui({
+    if: () => self.clientId.length > 0 && self.guild.length === 0,
+    type: 'helpbox',
+    variant: 'info',
+  }, 'bot')
+  noGuildSelectedBox = null;
+
+  @settings('bot')
+  @ui({
     type: 'discord-channel',
+    if: () => self.guild.length > 0,
   })
   listenAtChannels = '';
 
   @settings('bot')
   @ui({
     type: 'discord-channel',
+    if: () => self.guild.length > 0,
   })
   sendOnlineAnnounceToChannel = '';
 
   @settings('bot')
   @ui({
     type: 'discord-channel',
+    if: () => self.guild.length > 0,
   })
   sendGeneralAnnounceToChannel = '';
 
   @settings('mapping')
   @ui({
     type: 'discord-mapping',
+    if: () => self.guild.length > 0,
   })
   rolesMapping: { [permissionId: string]: string } = {};
 
   @settings('bot')
+  @ui({
+    type: 'toggle-enable',
+    if: () => self.guild.length > 0,
+  })
   deleteMessagesAfterWhile = false;
 
   constructor() {
@@ -96,16 +118,17 @@ class Discord extends Integration {
       if (this.embed && this.embedMessage && api.isStreamOnline) {
         this.embed.spliceFields(0, this.embed.fields.length);
         this.embed.addFields([
-          { name: 'Now Playing', value: api.stats.currentGame},
-          { name: 'Stream Title', value: api.stats.currentTitle},
-          { name: 'Started At', value: this.embedStartedAt, inline: true},
-          { name: 'Total Views', value: api.stats.currentViews, inline: true},
-          { name: 'Followers', value: api.stats.currentFollowers, inline: true},
+          { name: prepare('webpanel.responses.variable.game'), value: api.stats.currentGame},
+          { name: prepare('webpanel.responses.variable.title'), value: api.stats.currentTitle},
+          { name: prepare('integrations.discord.started-at'), value: this.embedStartedAt, inline: true},
+          { name: prepare('webpanel.viewers'), value: api.stats.currentViewers, inline: true},
+          { name: prepare('webpanel.views'), value: api.stats.currentViews, inline: true},
+          { name: prepare('webpanel.followers'), value: api.stats.currentFollowers, inline: true},
         ]);
         this.embed.setImage(`https://static-cdn.jtvnw.net/previews-ttv/live_user_${oauth.broadcasterUsername}-1920x1080.jpg?${Date.now()}`);
 
         if (oauth.broadcasterType !== '') {
-          this.embed.addField('Subscribers', api.stats.currentSubscribers, true);
+          this.embed.addField(prepare('webpanel.subscribers'), api.stats.currentSubscribers, true);
         }
         this.embedMessage.edit(this.embed);
       }
@@ -134,11 +157,11 @@ class Discord extends Integration {
       if (!user.userId) {
         continue;
       }
-      const guild = this.client.guilds.cache.get(this.client.guilds.cache.firstKey() || '');
+      const guild = this.client.guilds.cache.get(this.guild);
       if (!guild) {
         return warning('No servers found for discord');
       }
-      const discordUser = await guild.member(await guild.members.fetch(user.discordId));
+      const discordUser = guild.member(await guild.members.fetch(user.discordId));
       if (!discordUser) {
         warning('Discord user not found');
         continue;
@@ -235,12 +258,12 @@ class Discord extends Integration {
   async unlinkAccounts(opts: CommandOptions) {
     this.removeExpiredLinks();
     await getRepository(DiscordLink).delete({ userId: Number(opts.sender.userId) });
-    return [{ response: '$sender, all links were deleted', ...opts }];
+    return [{ response: prepare('integrations.discord.all-your-links-were-deleted', { sender: opts.sender }), ...opts }];
   }
 
   @command('!link')
   async linkAccounts(opts: CommandOptions) {
-    enum errors { NOT_UUID };
+    enum errors { NOT_UUID }
     this.removeExpiredLinks();
 
     try {
@@ -254,17 +277,17 @@ class Discord extends Integration {
       await getRepository(DiscordLink).save({
         ...link, userId: opts.sender.userId,
       });
-      return [{ response: `$sender, this account was linked with ${link.tag}.`, ...opts }];
+      return [{ response: prepare('integrations.discord.this-account-was-linked-with', { sender: opts.sender, discordTag: link.tag}), ...opts }];
     } catch (e) {
-      if (e.message === String(errors.NOT_UUID)) {
-        return [{ response: '$sender, invalid or expired token.', ...opts }];
-      } else if (e.message.includes('Expected parameter')) {
+      if (e.message.includes('Expected parameter')) {
         return [
-          { response: '$sender, to link you account on Discord: 1. Go to Discord server and send !link in bot channel. | 2. Wait for PM from bot | 3. Send command from you Discord PM here in twitch chat.', ...opts },
+          { response: prepare('integrations.discord.help-message', { sender: opts.sender }), ...opts },
         ];
       } else {
-        warning(e.stack);
-        return [{ response: '$sender, something went wrong.', ...opts }];
+        if (e.message !== String(errors.NOT_UUID)) {
+          warning(e.stack);
+        }
+        return [{ response: prepare('integrations.discord.invalid-or-expired-token', { sender: opts.sender }), ...opts }];
       }
     }
   }
@@ -276,16 +299,16 @@ class Discord extends Integration {
       this.embed.setDescription(`${oauth.broadcasterUsername.charAt(0).toUpperCase() + oauth.broadcasterUsername.slice(1)} is not streaming anymore! Check it next time!`);
       this.embed.spliceFields(0, this.embed.fields.length);
       this.embed.addFields([
-        { name: 'Now Playing', value: api.stats.currentGame},
-        { name: 'Stream Title', value: api.stats.currentTitle},
-        { name: 'Streamed At', value: `${this.embedStartedAt} - ${moment().tz(timezone).format('LLL')}`, inline: true},
-        { name: 'Total Views', value: api.stats.currentViews, inline: true},
-        { name: 'Followers', value: api.stats.currentFollowers, inline: true},
+        { name: prepare('webpanel.responses.variable.game'), value: api.stats.currentGame},
+        { name: prepare('webpanel.responses.variable.title'), value: api.stats.currentTitle},
+        { name: prepare('integrations.discord.streamed-at'), value: `${this.embedStartedAt} - ${moment().tz(timezone).format('LLL')}`, inline: true},
+        { name: prepare('webpanel.views'), value: api.stats.currentViews, inline: true},
+        { name: prepare('webpanel.followers'), value: api.stats.currentFollowers, inline: true},
       ]);
       this.embed.setImage(`https://static-cdn.jtvnw.net/ttv-static/404_preview-1920x1080.jpg?${Date.now()}`);
 
       if (oauth.broadcasterType !== '') {
-        this.embed.addField('Subscribers', api.stats.currentSubscribers, true);
+        this.embed.addField(prepare('webpanel.subscribers'), api.stats.currentSubscribers, true);
       }
       this.embedMessage.edit(this.embed);
     }
@@ -297,49 +320,43 @@ class Discord extends Integration {
   async sendStreamStartAnnounce() {
     moment.locale(general.lang); // set moment locale
 
-    if (this.client && this.sendOnlineAnnounceToChannel.length > 0) {
-      // search discord channel by ID
-      let channelFound = false;
-      for (const [ id, channel ] of this.client.channels.cache) {
-        if (channel.type === 'text') {
-          if (id === this.sendOnlineAnnounceToChannel || (channel as DiscordJs.TextChannel).name === this.sendGeneralAnnounceToChannel) {
-            const ch = this.client.channels.cache.find(o => o.id === id);
-            if (ch) {
-              this.embedStartedAt = moment().tz(timezone).format('LLL');
-              const embed = new DiscordJs.MessageEmbed()
-                .setURL('https://twitch.tv/' + oauth.broadcasterUsername)
-                .addFields([
-                  { name: 'Now Playing', value: api.stats.currentGame},
-                  { name: 'Stream Title', value: api.stats.currentTitle},
-                  { name: 'Started At', value: this.embedStartedAt, inline: true},
-                  { name: 'Total Views', value: api.stats.currentViews, inline: true},
-                  { name: 'Followers', value: api.stats.currentFollowers, inline: true},
-                ])
-                // Set the title of the field
-                .setTitle('https://twitch.tv/' + oauth.broadcasterUsername)
-                // Set the color of the embed
-                .setColor(0x00ff00)
-                // Set the main content of the embed
-                .setDescription(`${oauth.broadcasterUsername.charAt(0).toUpperCase() + oauth.broadcasterUsername.slice(1)} started stream! Check it out!`)
-                .setImage(`https://static-cdn.jtvnw.net/previews-ttv/live_user_${oauth.broadcasterUsername}-1920x1080.jpg?${Date.now()}`)
-                .setThumbnail(oauth.profileImageUrl)
-                .setFooter('Announced by sogeBot - https://www.sogebot.xyz');
-
-              if (oauth.broadcasterType !== '') {
-                embed.addField('Subscribers', api.stats.currentSubscribers, true);
-              }
-              // Send the embed to the same channel as the message
-              channelFound = true;
-              this.embedMessage = await (ch as DiscordJs.TextChannel).send(embed);
-              chatOut(`#${(ch as DiscordJs.TextChannel).name}: [[online announce embed]] [${this.client.user?.tag}]`);
-              this.embed = embed;
-            }
-          }
+    try {
+      if (this.client && this.sendOnlineAnnounceToChannel.length > 0 && this.guild.length > 0) {
+        const channel = this.client.guilds.cache.get(this.guild)?.channels.cache.get(this.sendOnlineAnnounceToChannel);
+        if (!channel) {
+          throw new Error(`Channel ${this.sendOnlineAnnounceToChannel} not found on your discord server`);
         }
+
+        this.embedStartedAt = moment().tz(timezone).format('LLL');
+        const embed = new DiscordJs.MessageEmbed()
+          .setURL('https://twitch.tv/' + oauth.broadcasterUsername)
+          .addFields([
+            { name: prepare('webpanel.responses.variable.game'), value: api.stats.currentGame},
+            { name: prepare('webpanel.responses.variable.title'), value: api.stats.currentTitle},
+            { name: prepare('integrations.discord.started-at'), value: this.embedStartedAt, inline: true},
+            { name: prepare('webpanel.views'), value: api.stats.currentViews, inline: true},
+            { name: prepare('webpanel.followers'), value: api.stats.currentFollowers, inline: true},
+          ])
+          // Set the title of the field
+          .setTitle('https://twitch.tv/' + oauth.broadcasterUsername)
+          // Set the color of the embed
+          .setColor(0x00ff00)
+          // Set the main content of the embed
+          .setDescription(`${oauth.broadcasterUsername.charAt(0).toUpperCase() + oauth.broadcasterUsername.slice(1)} started stream! Check it out!`)
+          .setImage(`https://static-cdn.jtvnw.net/previews-ttv/live_user_${oauth.broadcasterUsername}-1920x1080.jpg?${Date.now()}`)
+          .setThumbnail(oauth.profileImageUrl)
+          .setFooter('Announced by sogeBot - https://www.sogebot.xyz');
+
+        if (oauth.broadcasterType !== '') {
+          embed.addField(prepare('webpanel.subscribers'), api.stats.currentSubscribers, true);
+        }
+        // Send the embed to the same channel as the message
+        this.embedMessage = await (channel as DiscordJs.TextChannel).send(embed);
+        chatOut(`#${(channel as DiscordJs.TextChannel).name}: [[online announce embed]] [${this.client.user?.tag}]`);
+        this.embed = embed;
       }
-      if (!channelFound) {
-        warning(`Discord channel ${this.sendOnlineAnnounceToChannel} not found on server.`);
-      }
+    } catch (e) {
+      warning(e.stack);
     }
   }
 
@@ -356,9 +373,14 @@ class Discord extends Integration {
       });
 
       this.client.on('message', async (msg) => {
-        if (this.client) {
+        if (this.client && this.guild) {
           if (msg.author.tag === get(this.client, 'user.tag', null)) {
             // don't do anything on self messages;
+            return;
+          }
+
+          // don't listen discord DM messages and other guilds
+          if (msg.channel.type === 'dm' || msg.guild?.id !== this.guild) {
             return;
           }
 
@@ -385,11 +407,16 @@ class Discord extends Integration {
           discordId: author.id,
           createdAt: Date.now(),
         });
-        author.send(`Hello ${msg.author.tag}, to link this Discord account with your Twitch account on ${oauth.broadcasterUsername} channel, go to https://twitch.tv/${oauth.broadcasterUsername}, login to your account and send this command to chat \n\n\t\t\`!link ${link.id}\`\n\nNOTE: This expires in 10 minutes.`);
-        whisperOut(`${author.tag}: Hello ${author.tag}, to link this Discord account with your Twitch account on ${oauth.broadcasterUsername} channel, go to https://twitch.tv/${oauth.broadcasterUsername}, login to your account and send this command to chat \\n\\n\\t\\t\`!link ${link.id}\`\\n\\nNOTE: This expires in 10 minutes.`);
+        const message = prepare('integrations.discord.link-whisper', {
+          tag: msg.author.tag,
+          broadcaster: oauth.broadcasterUsername,
+          id: link.id,
+        });
+        author.send(message);
+        whisperOut(`${author.tag}: ${message}`);
 
-        const reply = await msg.reply('check your DMs for steps to link your account.');
-        chatOut(`#${channel.name}: @${author.tag}, check your DMs for steps to link your account. [${msg.author.tag}]`);
+        const reply = await msg.reply(prepare('integrations.discord.check-your-dm'));
+        chatOut(`#${channel.name}: @${author.tag}, ${prepare('integrations.discord.link-whisper')} [${msg.author.tag}]`);
         if (this.deleteMessagesAfterWhile) {
           setTimeout(() => {
             msg.delete();
@@ -399,7 +426,7 @@ class Discord extends Integration {
         return;
       } else if (content === '!unlink') {
         await getRepository(DiscordLink).delete({ tag: author.tag });
-        msg.reply('all links were deleted');
+        msg.reply(prepare('integrations.discord.all-your-links-were-deleted'));
         return;
       }
     }
@@ -432,9 +459,9 @@ class Discord extends Integration {
                       reply.delete();
                     }, 10000);
                   }
-                };
+                }
               }, 1000 * i);
-            };
+            }
           }
           if (this.deleteMessagesAfterWhile) {
             if (msg) {
@@ -463,11 +490,8 @@ class Discord extends Integration {
   sockets() {
     adminEndpoint(this.nsp, 'discord::getRoles', async (cb) => {
       try {
-        if (!this.client) {
-          throw new Error('DiscordJS client not loaded');
-        }
-        for (const [, guild] of this.client.guilds.cache) {
-          return cb(null, guild.roles.cache
+        if (this.client && this.guild) {
+          return cb(null, this.client.guilds.cache.get(this.guild)?.roles.cache
             .sort((a, b) => {
               const nameA = a.name.toUpperCase(); // ignore upper and lowercase
               const nameB = b.name.toUpperCase(); // ignore upper and lowercase
@@ -482,16 +506,41 @@ class Discord extends Integration {
             })
             .map(o => ({ html: `<strong>${o.name}</strong> &lt;${o.id}&gt;`, value: o.id }))
           );
-        };
-        cb(null, []);
+        } else {
+          cb(null, []);
+        }
+      } catch (e) {
+        cb(e.message, []);
+      }
+    });
+    adminEndpoint(this.nsp, 'discord::getGuilds', async (cb) => {
+      try {
+        if (this.client) {
+          return cb(null, this.client.guilds.cache
+            .sort((a, b) => {
+              const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+              const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+              if (nameA < nameB) {
+                return -1;
+              }
+              if (nameA > nameB) {
+                return 1;
+              }
+              // names must be equal
+              return 0;
+            })
+            .map(o => ({ html: `<strong>${o.name}</strong> &lt;${o.id}&gt;`, value: o.id })));
+        } else {
+          cb(null, []);
+        }
       } catch (e) {
         cb(e.message, []);
       }
     });
     adminEndpoint(this.nsp, 'discord::getChannels', async (cb) => {
       try {
-        if (this.client) {
-          cb(null, this.client.channels.cache
+        if (this.client && this.guild) {
+          cb(null, this.client.guilds.cache.get(this.guild)?.channels.cache
             .filter(o => o.type === 'text')
             .sort((a, b) => {
               const nameA = (a as DiscordJs.TextChannel).name.toUpperCase(); // ignore upper and lowercase
@@ -514,7 +563,7 @@ class Discord extends Integration {
         cb(e.stack, []);
       }
     });
-    adminEndpoint(this.nsp, 'authorize', async (cb) => {
+    adminEndpoint(this.nsp, 'discord::authorize', async (cb) => {
       if (this.token === '' || this.clientId === '') {
         cb('Cannot authorize! Missing clientId or token.', null);
       } else {

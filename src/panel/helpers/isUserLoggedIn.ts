@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { get } from 'lodash-es';
-import { getSocket } from './socket';
 
 export const isUserLoggedIn = async function (mustBeLogged = true, mustBeAdmin = true) {
   // check if we have auth code
@@ -46,13 +45,26 @@ export const isUserLoggedIn = async function (mustBeLogged = true, mustBeAdmin =
       }
       localStorage.setItem('userId', data.id);
 
-      // set new authorization if set
-      const newAuthorization = localStorage.getItem('newAuthorization');
-      if (newAuthorization !== null) {
+      // get new authorization if we are missing access or refresh tokens
+      const accessToken = localStorage.getItem('accessToken') || '';
+      const refreshToken = localStorage.getItem('refreshToken') || '';
+      const isNewAuthorization = accessToken.trim().length === 0 || refreshToken.trim().length === 0;
+      if (isNewAuthorization) {
         await new Promise((resolve) => {
-          getSocket('/', true).emit('newAuthorization', { userId: Number(data.id), username: data.login }, () => {
+          console.groupCollapsed('isUserLoggedIn::validate');
+          console.groupEnd();
+
+          axios.get(`${window.location.origin}/socket/validate`, {
+            headers: {
+              'x-twitch-token': code,
+              'x-twitch-userid': data.id,
+            },
+          }).then(validation => {
+            localStorage.setItem('accessToken', validation.data.accessToken);
+            localStorage.setItem('refreshToken', validation.data.refreshToken);
+            localStorage.setItem('userType', validation.data.userType);
             resolve();
-          });
+          }).catch(() => resolve());
         });
       }
 
@@ -75,8 +87,6 @@ export const isUserLoggedIn = async function (mustBeLogged = true, mustBeAdmin =
           check();
         });
       }
-
-      localStorage.removeItem('newAuthorization');
       return data;
     } catch(e) {
       console.debug(e);

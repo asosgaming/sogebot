@@ -106,7 +106,7 @@
             <div :key="category + '__permission_based__#1'">
               <b-card no-body>
                 <b-tabs pills card vertical>
-                  <b-tab v-for="permission of permissions" :title="permission.name" :key="permission.id">
+                  <b-tab v-for="permission of getNotIgnoredPermissions(permissions, settings['__permission_based__'][category])" :key="permission.id" :title="permission.name">
                     <b-card-text>
                       <template v-for="(currentValue, defaultValue) of settings['__permission_based__'][category]">
                         <div v-if="typeof value === 'object' && !defaultValue.startsWith('_')" class="p-0 pl-2 pr-2 " :key="$route.params.type + '.' + $route.params.id + '.settings.' + defaultValue + String(currentValue[permission.id] === null)">
@@ -122,7 +122,7 @@
                               v-bind:title="translate($route.params.type + '.' + $route.params.id + '.settings.' + defaultValue)"
                               v-else-if="typeof getPermissionSettingsValue(permission.id, currentValue) === 'boolean'"
                               v-bind:value="getPermissionSettingsValue(permission.id, currentValue)"
-                              v-on:update="settings['__permission_based__'][category][defaultValue][permission.id] = $event; triggerDataChange()"
+                              v-on:update="settings['__permission_based__'][category][defaultValue][permission.id] = $event.value; triggerDataChange()"
                               :disabled="currentValue[permission.id] === null"
                             ></toggle-enable>
                             <number-input
@@ -254,6 +254,7 @@ enum State {
     'credits-custom-texts': () => import('./components/interface/credits-custom-texts.vue'),
     'credits-social': () => import('./components/interface/credits-social.vue'),
     'cron': () => import('./components/interface/cron.vue'),
+    'discord-guild': () => import('./components/interface/discord-guild.vue'),
     'discord-channel': () => import('./components/interface/discord-channel.vue'),
     'discord-mapping': () => import('./components/interface/discord-mapping.vue'),
     'global-ignorelist-exclude': () => import('./components/interface/global-ignorelist-exclude.vue'),
@@ -264,7 +265,6 @@ enum State {
     'loading': () => import('../../components/loading.vue'),
     'number-input': () => import('./components/interface/number-input.vue'),
     'selector': () => import('./components/interface/selector.vue'),
-    'socket-list': () => import('./components/interface/socket-list.vue'),
     'sortable-list': () => import('./components/interface/sortable-list.vue'),
     'text-input': () => import('./components/interface/text-input.vue'),
     'textarea-from-array': () => import('./components/interface/textarea-from-array.vue'),
@@ -292,6 +292,20 @@ export default class interfaceSettings extends Vue {
 
   permissions: PermissionsInterface[] = [];
 
+  isPermissionCategoryIgnored(permission: { [x: string]: any }, permId: string) {
+    const keys = Object.keys(permission);
+    if (keys.length > 0) {
+      return permission[keys[0]][permId] === '%%%%___ignored___%%%%';
+    };
+    return false;
+  }
+
+  getNotIgnoredPermissions(permissions: Required<PermissionsInterface>[], data: { [x: string]: any }) {
+    return permissions.filter(o => {
+      return !this.isPermissionCategoryIgnored(data, o.id);
+    })
+  }
+
   get settingsWithoutPermissions() {
     let withoutPermissions: any = {};
     Object.keys(this.settings).filter(o => !o.includes('permission')).forEach((key) => {
@@ -307,7 +321,7 @@ export default class interfaceSettings extends Vue {
     // set settings as first and commands as last
     const settings = withoutPermissions.settings; delete withoutPermissions.settings;
     const commands = withoutPermissions.commands; delete withoutPermissions.commands;
-    let ordered = {};
+    let ordered: { [x: string]: string | null } = {};
     Object.keys(withoutPermissions).sort().forEach(function(key) {
       ordered[key] = withoutPermissions[key];
     });
@@ -334,7 +348,10 @@ export default class interfaceSettings extends Vue {
       this.heightOfMenuUpdate()
     }, 1000)
 
-    this.psocket.emit('permissions', (data) => {
+    this.psocket.emit('permissions', (err: string | null, data: Readonly<Required<PermissionsInterface>>[]) => {
+  if(err) {
+    return console.error(err);
+  }
       this.permissions = data
     })
   }
@@ -349,7 +366,7 @@ export default class interfaceSettings extends Vue {
 
   @Watch('$route.params.type')
   async refresh() {
-    this.socket.emit(this.$route.params.type, (err, systems: systemFromIO[] ) => {
+    this.socket.emit(this.$route.params.type, (err: string | null, systems: systemFromIO[] ) => {
       if (!systems.map(o => o.name).includes(this.$route.params.id)) {
         this.$router.push({ name: 'InterfaceSettings', params: { type: this.$route.params.type, id: systems[0].name } });
         this.loadSettings(systems[0].name);
@@ -362,7 +379,7 @@ export default class interfaceSettings extends Vue {
     Vue.prototype.configuration = await getConfiguration(); // force refresh config
   }
 
-  getBorderStyle(system) {
+  getBorderStyle(system: string) {
     return system === this.$route.params.id ?
       {
         'border-width': '0px',
@@ -375,24 +392,24 @@ export default class interfaceSettings extends Vue {
       }
   }
 
-  setSelected(system) {
+  setSelected(system: string) {
     this.$router.push({ name: 'InterfaceSettings', params: { type: this.$route.params.type, id: system } });
   }
 
   @Watch('$route.params.id')
-  loadSettings(system) {
+  loadSettings(system: string) {
     if (!this.$route.params.id) {
       return this.refresh()
     };
 
     this.state.loaded = State.PROGRESS;
     getSocket(`/${this.$route.params.type}/${system}`)
-      .emit('settings', (err, _settings, _ui) => {
+      .emit('settings', (err: string | null, _settings: { [x: string]: number | string }, _ui: { [x: string]: { [attr: string]: any } }) => {
         if (system !== this.$route.params.id) return // skip if we quickly changed system
 
         this.state.loaded = State.DONE
-        _settings = Object.entries(_settings);
-        _ui = Object.entries(_ui);
+        const settingsEntries = Object.entries(_settings);
+        const uiEntries = Object.entries(_ui);
 
         let settings: any = { settings: {} }
         let ui: any = { settings: {} }
@@ -400,37 +417,37 @@ export default class interfaceSettings extends Vue {
         // sorting
         // enabled is first - remove on core/overlay
         if (!['core', 'overlays'].includes(this.$route.params.type)) {
-          const enabled = _settings.find(o => {
+          const enabled = settingsEntries.find(o => {
             return o[0] === 'enabled'
           })
-          if (enabled.length > 0) {
+          if (enabled) {
             settings.settings.enabled = enabled[1]
           }
         }
 
         // everything else except commands and enabled and are string|number|bool
-        for (let [name, value] of filter(_settings, o => o[0] !== '_' && o[0] !== 'enabled' && o[0] !== 'commands' && typeof o[1] !== 'object')) {
+        for (let [name, value] of filter(settingsEntries, o => o[0] !== '_' && o[0] !== 'enabled' && o[0] !== 'commands' && typeof o[1] !== 'object')) {
           settings.settings[name] = value
         }
         // everything else except commands and enabled and are objects -> own category
-        for (let [name, value] of filter(_settings, o => o[0] !== '_' && o[0] !== 'enabled' && o[0] !== 'commands' && typeof o[1] === 'object')) {
+        for (let [name, value] of filter(settingsEntries, o => o[0] !== '_' && o[0] !== 'enabled' && o[0] !== 'commands' && typeof o[1] === 'object')) {
           settings[name] = value
         }
 
         // commands at last
-        for (let [name, value] of filter(_settings, o => o[0] === 'commands')) {
+        for (let [name, value] of filter(settingsEntries, o => o[0] === 'commands')) {
           settings[name] = value
         }
 
         // ui
         // everything else except commands and enabled and are string|number|bool
-        for (let [name, value] of filter(_ui, o => o[0] !== '_' && o[0] !== 'enabled' && o[0] !== 'commands' && typeof o[1].type !== 'undefined')) {
+        for (let [name, value] of filter(uiEntries, o => o[0] !== '_' && o[0] !== 'enabled' && o[0] !== 'commands' && typeof o[1].type !== 'undefined')) {
           if (typeof settings.settings[name] === 'undefined') settings.settings[name] = null
           ui.settings[name] = value
         }
 
         // everything else except commands and enabled and are objects -> own category
-        for (let [name, value] of filter(_ui, o => o[0] !== '_' && o[0] !== 'enabled' && o[0] !== 'commands' && typeof o[1].type === 'undefined')) {
+        for (let [name, value] of filter(uiEntries, o => o[0] !== '_' && o[0] !== 'enabled' && o[0] !== 'commands' && typeof o[1].type === 'undefined')) {
           if (typeof settings[name] === 'undefined') settings[name] = {}
           for (let [k, /* v */] of Object.entries(value)) {
             if (typeof settings[name][k] === 'undefined') settings[name][k] = null
@@ -499,7 +516,7 @@ export default class interfaceSettings extends Vue {
 
     console.debug('Saving settings', settings);
     getSocket(`/${this.$route.params.type}/${this.$route.params.id}`)
-      .emit('settings.update', settings, async (err) => {
+      .emit('settings.update', settings, async (err: string | null) => {
         setTimeout(() => this.state.settings = 0, 1000)
         if (err) {
           this.state.settings = 3
@@ -519,7 +536,7 @@ export default class interfaceSettings extends Vue {
       })
     }
 
-  triggerError (error) {
+  triggerError (error: string) {
     this.error = error;
     this.showError = true;
     setTimeout(() => this.showError = false, 2000);
@@ -528,7 +545,7 @@ export default class interfaceSettings extends Vue {
     this.isDataChanged = false; this.isDataChanged = true;
   }
 
-  getPermissionSettingsValue(permId, values) {
+  getPermissionSettingsValue(permId: string, values: { [x: string]: string | null }) {
     const startingOrder = get(this.permissions.find(permission => permission.id === permId), 'order', this.permissions.length);
     for (let i = startingOrder; i <= this.permissions.length; i++) {
       const value = values[get(this.permissions.find(permission => permission.order === i), 'id', '0efd7b1c-e460-4167-8e06-8aaf2c170311' /* viewers */)];
@@ -538,11 +555,11 @@ export default class interfaceSettings extends Vue {
     }
 
     // if order is last -> mirror viewers values
-    console.error(`Value for ${permId} not found in ${JSON.stringify(values)}`);
+    console.debug(`Value for ${permId} not found in ${JSON.stringify(values)}`);
     return values['0efd7b1c-e460-4167-8e06-8aaf2c170311' /* viewers */];
   }
 
-  togglePermissionLock(permission, currentValue) {
+  togglePermissionLock(permission: Required<PermissionsInterface>, currentValue: { [x: string]: string | null }) {
     if(currentValue[permission.id] === null) {
       currentValue[permission.id] = this.getPermissionSettingsValue(permission.id, currentValue)
     } else {

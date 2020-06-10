@@ -6,11 +6,29 @@
           <template v-slot:button-content>
             {{ translate('menu.' + category) }}
           </template>
-          <b-dropdown-item v-for="item of menu.filter(o => o.category === category)"
+          <b-dropdown-item v-for="item of menu.filter(o => o.category === category && o.enabled)"
                            :key="item.id + item.name + item.category"
                            :href="'#/' + item.id.replace(/\./g, '/')">
             {{translate('menu.' + item.name)}}
           </b-dropdown-item>
+          <b-dropdown-group id="dropdown-group-1" v-if="menu.filter(o => o.category === category && !o.enabled).length > 0" class="pt-2">
+            <template v-slot:header>
+              <header class="p-1" @click.prevent="isDisabledHidden = !isDisabledHidden" style="cursor: pointer;">
+                {{ translate('disabled') }}
+                <small>
+                  <fa icon="plus" fixed-width v-if="isDisabledHidden"/>
+                  <fa icon="minus" fixed-width v-else />
+                </small>
+              </header>
+            </template>
+            <template v-if="!isDisabledHidden">
+              <b-dropdown-item v-for="item of menu.filter(o => o.category === category && !o.enabled)"
+                              :key="item.id + item.name + item.category"
+                              :href="'#/' + item.id.replace(/\./g, '/')">
+                {{translate('menu.' + item.name)}}
+              </b-dropdown-item>
+            </template>
+          </b-dropdown-group>
         </b-dropdown>
       </span>
     </nav>
@@ -23,6 +41,10 @@ import { PerfectScrollbar } from 'vue2-perfect-scrollbar'
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
 import { getSocket } from 'src/panel/helpers/socket';
 
+import type { menu } from 'src/bot/helpers/panel';
+
+type menuWithEnabled = Omit<typeof menu[number], 'this'> & { enabled: boolean };
+
 @Component({
   components: {
     PerfectScrollbar
@@ -30,20 +52,42 @@ import { getSocket } from 'src/panel/helpers/socket';
 })
 export default class Menu extends Vue {
   socket = getSocket('/');
-  menu: any = [];
+  menu: menuWithEnabled[] = [];
   categories = ['manage', 'settings', 'registry', /* 'logs', */ 'stats'];
+  isDisabledHidden = true;
 
-  mounted() {
+  async mounted() {
     // Workaround for touch screens - https://github.com/mdbootstrap/perfect-scrollbar/issues/867
-    if (typeof window['DocumentTouch'] === 'undefined') {
-      window['DocumentTouch'] = HTMLDocument
+    if (typeof (window as any).DocumentTouch === 'undefined') {
+      (window as any).DocumentTouch = HTMLDocument
     }
 
-    this.socket.emit('menu', (menu) => {
-      this.menu = menu.sort((a, b) => {
-        return this.translate('menu.' + a.name).localeCompare(this.translate('menu.' + b.name))
-      });
-    });
+    const isLoaded = await Promise.race([
+      new Promise(resolve => {
+        this.socket.emit('menu', (err: string | null, data: menuWithEnabled[]) => {
+          if (err) {
+            return console.error(err);
+          }
+          console.groupCollapsed('menu::menu');
+          console.log({data});
+          console.groupEnd();
+          for (const item of data.sort((a, b) => {
+            return this.translate('menu.' + a.name).localeCompare(this.translate('menu.' + b.name))
+          })) {
+            this.menu.push(item);
+          }
+          resolve(true);
+        });
+      }),
+      new Promise(resolve => {
+        setTimeout(() => resolve(false), 4000);
+      }),
+    ]);
+
+    if (!isLoaded) {
+      console.error('menu not loaded, refreshing page')
+      location.reload();
+    }
   }
 }
 </script>

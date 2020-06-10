@@ -6,11 +6,11 @@ import { UserBit } from '../database/entity/user';
 class Bits extends Stats {
   constructor() {
     super();
-    this.addMenu({ category: 'stats', name: 'bits', id: 'stats/bits' });
+    this.addMenu({ category: 'stats', name: 'bits', id: 'stats/bits', this: null });
   }
 
   sockets() {
-    adminEndpoint(this.nsp, 'bits::getAll', async (cb) => {
+    adminEndpoint(this.nsp, 'generic::getAll', async (cb) => {
       try {
         cb(null, await getRepository(UserBit).find({
           relations: ['user'],

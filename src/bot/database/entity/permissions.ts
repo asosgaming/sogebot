@@ -10,21 +10,21 @@ export interface PermissionsInterface {
   automation: 'none' | 'casters' | 'moderators' | 'subscribers' | 'viewers' | 'followers' | 'vip';
   userIds: string[];
   filters: PermissionFiltersInterface[];
-};
+}
 
 export interface PermissionFiltersInterface {
   id?: string;
   permission: PermissionsInterface;
   comparator: '<' | '>' | '==' | '<=' | '>=';
-  type: 'points' | 'watched' | 'tips' | 'bits' | 'messages' | 'subtier' | 'subcumulativemonths' | 'substreakmonths';
+  type: 'points' | 'watched' | 'tips' | 'bits' | 'messages' | 'subtier' | 'subcumulativemonths' | 'substreakmonths' | 'followtime';
   value: number;
-};
+}
 
 export interface PermissionCommandsInterface {
   id?: string;
   permission: string | null;
   name: string;
-};
+}
 
 export const Permissions = new EntitySchema<Readonly<Required<PermissionsInterface>>>({
   name: 'permissions',

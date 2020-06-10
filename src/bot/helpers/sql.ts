@@ -10,7 +10,8 @@ if (['mysql', 'mariadb'].includes(process.env.TYPEORM_CONNECTION ?? 'sqlite')) {
   new Promise(async () => {
     const updateSQLVariableLimit = async () => {
       if (!isDbConnected) {
-        return setTimeout(() => updateSQLVariableLimit(), 1000);
+        setTimeout(() => updateSQLVariableLimit(), 1000);
+        return;
       }
       const query = await getManager().query(`show variables like 'max_prepared_stmt_count'`);
       SQLVariableLimit = Number(query[0].Value);
@@ -18,7 +19,7 @@ if (['mysql', 'mariadb'].includes(process.env.TYPEORM_CONNECTION ?? 'sqlite')) {
     };
     updateSQLVariableLimit();
   });
-};
+}
 if (['postgres'].includes(process.env.TYPEORM_CONNECTION ?? 'sqlite')) {
   SQLVariableLimit = 32767; // per https://stackoverflow.com/a/42251312
-};
+}

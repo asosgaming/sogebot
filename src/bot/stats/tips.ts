@@ -6,11 +6,11 @@ import { UserTip } from '../database/entity/user';
 class Tips extends Stats {
   constructor() {
     super();
-    this.addMenu({ category: 'stats', name: 'tips', id: 'stats/tips' });
+    this.addMenu({ category: 'stats', name: 'tips', id: 'stats/tips', this: null });
   }
 
   sockets() {
-    adminEndpoint(this.nsp, 'tips::getAll', async (cb) => {
+    adminEndpoint(this.nsp, 'generic::getAll', async (cb) => {
       try {
         cb(null, await getRepository(UserTip).find({
           relations: ['user'],
