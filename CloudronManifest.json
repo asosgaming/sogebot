@@ -11,6 +11,18 @@
     "httpPort": 20000,
     "memoryLimit": 268435456,
     "udpPorts": {},
+    "tcpPorts": {
+        "SERVERQUERY_PORT": {
+          "title": "sogeBot API Port",
+          "description": "Server Listening Port (tcp)",
+          "defaultValue": 20000
+        },
+        "FILETRANSFER_PORT": {
+          "title": "sogeBot profiler",
+          "description": "profiler transfer Port (tcp)",
+          "defaultValue": 9229
+        }
+     },
     "addons": {
       "localstorage": {},
       "mysql": {}
