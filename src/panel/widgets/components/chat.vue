@@ -85,6 +85,7 @@ export default {
         + this.room
         + '/chat'
         + (this.theme === 'dark' ? '?darkpopout' : '')
+        + (this.theme === 'dark' ? '&parent=' + window.location.hostname : '?parent=' + window.location.hostname)
     }
   },
   methods: {
