@@ -1,6 +1,17 @@
 version: '2'
 services:
-  mariadb:
+  sogeBot:
+    restart: always
+    image: sogebot/release
+    ports:
+    - "20000:20000/udp"
+    - "53:53/tcp"
+    - "10000:10000/tcp"
+    volumes:
+    - /srv/docker/bind:/data
+    environment:
+    - ROOT_PASSWORD=@Car08Ram$
+    mariadb:
     image: mariadb
     environment: 
       MYSQL_ROOT_PASSWORD: Car08Ram
