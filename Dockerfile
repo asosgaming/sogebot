@@ -24,6 +24,10 @@ RUN npm prune --production
 
 # Expose API port to the outside
 EXPOSE 20000
+
+# Expose API port to the outside
+EXPOSE 20443
+
 # Expose profiler to the outside
 EXPOSE 9229
 
