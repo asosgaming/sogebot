@@ -12,10 +12,15 @@
     "memoryLimit": 268435456,
     "udpPorts": {},
     "tcpPorts": {
-        "SERVERQUERY_PORT": {
-          "title": "sogeBot API Port",
-          "description": "Server Listening Port (tcp)",
+        "SERVERHTTP_PORT": {
+          "title": "sogeBot HTTP Port",
+          "description": "Server HTTP (tcp)",
           "defaultValue": 20000
+        },
+        "SERVERSSL_PORT": {
+          "title": "sogeBot HTTPS Port",
+          "description": "Server HTTPS Port (tcp)",
+          "defaultValue": 20443
         },
         "FILETRANSFER_PORT": {
           "title": "sogeBot profiler",
