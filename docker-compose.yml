@@ -5,8 +5,8 @@ services:
     image: sogebot/release
     ports:
     - "20000:20000/udp"
-    - "53:53/tcp"
-    - "10000:10000/tcp"
+    - "20443:20443/tcp"
+    - "9229:9229/tcp"
     volumes:
     - /srv/docker/bind:/data
     environment:
