@@ -1,9 +1,11 @@
 FROM node:stretch-slim
+MAINTAINER Chad Reesey <chad.reesey@asosgaming.com>
 
 ENV LAST_UPDATED 2020-11-05-1440
 
-ENV NODE_ENV production
-ENV ENV production
+ENV NODE_ENV production \
+    ENV production \
+    LOG="/app/" 
 
 RUN apt-get update
 RUN apt-get install -y build-essential nasm libtool make bash git python
