@@ -1,17 +1,27 @@
 FROM node:stretch-slim
-MAINTAINER Chad Reesey <chad.reesey@asosgaming.com>
+MAINTAINER Reesey275 <reesey275@gmail.com>
 
-ENV LAST_UPDATED 2020-11-05-1440
+ENV LAST_UPDATED 2020-16-06-2130
 
 ENV NODE_ENV production \
     ENV production \
-    LOG="/app/" 
+    LOGS="/app/logs" 
 
-RUN apt-get update
-RUN apt-get install -y build-essential nasm libtool make bash git python
 
+
+# Update apt and install Deps
 # cwebp error while loading shared libraries: libGL.so.1: cannot open shared object file: No such file or directory
-RUN apt-get install -y libglu1 libxi6
+RUN apt-get -q update && \
+    apt-get -q install -y \
+    build-essential \
+    nasm \
+    libtool \
+    make \
+    bash \
+    git \
+    python \
+    libglu1 \
+    libxi6
 
 # Copy source code
 COPY . /app
@@ -19,19 +29,21 @@ COPY . /app
 # Change working directory
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies & Remove dev dependencies (not needed anymore)
 RUN make
-# Remove dev dependencies (not needed anymore)
 RUN npm prune --production
 
-# Expose API port to the outside
-EXPOSE 20000
+# Storage Volume
+#LOGS="/app/logs" 
+#VOLUME ["$LOGS"]
+VOLUME /app/logs/
 
-# Expose API port to the outside
-EXPOSE 20443
-
+# Expose HTTP port to the outside
+EXPOSE  20000
+# Expose HTTPS port to the outside
+EXPOSE  20443
 # Expose profiler to the outside
-EXPOSE 9229
+EXPOSE  9229
 
 # Add startup script
 COPY docker.sh /

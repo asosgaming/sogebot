@@ -7,8 +7,7 @@
     "tagline": "Out-of-this-world streaming bot solution",
     "postInstallMessage": "file://POSTINSTALL.md",
     "version": "11.7.0",
-    "healthCheckPath": "/",
-    "httpPort": 20000,
+    "httpPort": 80,
     "memoryLimit": 268435456,
     "udpPorts": {},
     "tcpPorts": {
