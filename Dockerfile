@@ -2,8 +2,9 @@ FROM node:stretch-slim
 
 ENV LAST_UPDATED 2020-11-05-1440
 
-ENV NODE_ENV production
-ENV ENV production
+ENV NODE_ENV production \
+    ENV production \
+    LOGS="/app/sogebot/logs" 
 
 RUN apt-get update
 RUN apt-get install -y build-essential nasm libtool make bash git python
@@ -22,8 +23,16 @@ RUN make
 # Remove dev dependencies (not needed anymore)
 RUN npm prune --production
 
-# Expose API port to the outside
-EXPOSE 20000
+# Copy environment file to image. Not currently needed.
+#COPY .env ./sogebot/app
+
+# Storage Volume
+VOLUME /app/logs/
+
+# Expose HTTP port to the outside
+EXPOSE  20000
+# Expose HTTPS port to the outside
+EXPOSE  20443
 # Expose profiler to the outside
 EXPOSE 9229
 

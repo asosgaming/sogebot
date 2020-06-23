@@ -1,0 +1,45 @@
+{
+    "id": "com.sogebot.cloudronapp",
+    "title": "sogeBot Server",
+    "author": "sogeBot authors",
+    "description": "file://DESCRIPTION.md",
+    "changelog": "file://CHANGELOG",
+    "tagline": "Out-of-this-world streaming bot solution",
+    "postInstallMessage": "file://POSTINSTALL.md",
+    "version": "11.7.0",
+    "httpPort": 80,
+    "memoryLimit": 268435456,
+    "udpPorts": {},
+    "tcpPorts": {
+        "SERVERHTTP_PORT": {
+          "title": "sogeBot HTTP Port",
+          "description": "Server HTTP (tcp)",
+          "defaultValue": 20000
+        },
+        "SERVERSSL_PORT": {
+          "title": "sogeBot HTTPS Port",
+          "description": "Server HTTPS Port (tcp)",
+          "defaultValue": 20443
+        },
+        "FILETRANSFER_PORT": {
+          "title": "sogeBot profiler",
+          "description": "profiler transfer Port (tcp)",
+          "defaultValue": 9229
+        }
+     },
+    "addons": {
+      "localstorage": {},
+      "mysql": {}
+    },
+    "manifestVersion": 2,
+    "website": "https://asosgaming.net",
+    "contactEmail": "support@asosgaming.net",
+    "icon": "public/favicon.ico",
+    "tags": [
+      "stream", "bot"
+    ],
+    "mediaLinks": [
+      "https://cloudron-app-screenshots.s3.amazonaws.com/com.teamspeak.cloudronapp/f0a5df46cae60c49336f9c898972f8f326138f34/teamspeak-00.png"
+    ],
+    "documentationUrl": "https://asosgaming.net/documentation/apps/sogeBot/"
+  }
