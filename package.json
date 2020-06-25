@@ -19,6 +19,7 @@
     "bootstrap-toggle": "2.2.2",
     "centrifuge": "2.6.2",
     "chalk": "4.0.0",
+    "clean": "4.0.2",
     "color": "3.1.2",
     "core-js": "^3.6.5",
     "cron-parser": "2.15.0",
