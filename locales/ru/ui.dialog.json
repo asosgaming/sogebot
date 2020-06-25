@@ -3,6 +3,25 @@
     "edit": "Редактировать",
     "add": "Добавить"
   },
+  "position": {
+    "settings": "Position settings",
+    "anchorX": "Anchor X position",
+    "anchorY": "Anchor Y position",
+    "left": "Left",
+    "right": "Right",
+    "middle": "Middle",
+    "top": "Top",
+    "bottom": "Bottom",
+    "x": "X",
+    "y": "Y"
+  },
+  "font": {
+    "shadowShiftRight": "Shift Right",
+    "shadowShiftDown": "Shift Down",
+    "shadowBlur": "Blur",
+    "shadowOpacity": "Opacity",
+    "color": "Color"
+  },
   "errors": {
     "required": "Это поле не может быть пустым.",
     "minValue": "Наименьшее значение этого поля равно $value."

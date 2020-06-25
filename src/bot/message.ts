@@ -282,7 +282,10 @@ class Message {
             return state.isOk && !state.isEval ? state.setValue : state.updated.currentValue;
           }
         }
-        return customvariables.getValueOf(variable, { sender: attr.sender, param: attr.param });
+        return customvariables.getValueOf(variable, {
+          sender: { ...attr.sender, source: typeof attr.sender.discord === 'undefined' ? 'twitch' : 'discord' },
+          param: attr.param,
+        });
       },
       // force quiet variable set
       '$!_#': async (variable: string) => {
@@ -291,7 +294,10 @@ class Message {
           const state = await customvariables.setValueOf(variable, attr.param, { sender: attr.sender });
           return state.updated.currentValue;
         }
-        return customvariables.getValueOf(variable, { sender: attr.sender, param: attr.param });
+        return customvariables.getValueOf(variable, {
+          sender: { ...attr.sender, source: typeof attr.sender.discord === 'undefined' ? 'twitch' : 'discord' },
+          param: attr.param,
+        });
       },
       // force full quiet variable
       '$!!_#': async (variable: string) => {
@@ -521,6 +527,27 @@ class Message {
                 return o.alias;
               }
             })).sort().join(', ');
+          case 'core':
+          case '!core':
+            if (permission) {
+              const _permission = await permissions.get(permission);
+              if (_permission) {
+                const coreCommands = (await Promise.all((await new Parser().getCommandsList()).map(async (item) => {
+                  const customPermission = await permissions.getCommandPermission(item.id);
+                  return { ...item, permission: typeof customPermission !== 'undefined' ? customPermission : item.permission };
+                })))
+                  .filter(item => item.permission === _permission.id);
+                return coreCommands.length === 0
+                  ? ' '
+                  : coreCommands.map(item => system === '!core' ? item.command : item.command.replace('!', '')).sort().join(', ');
+              } else {
+                error(`Permission for (list.core.${permission}) not found.`);
+                return '';
+              }
+            } else {
+              error('Missing permission for (list.core.<missing>).');
+              return '';
+            }
           case 'command':
             if (permission) {
               const responses = commands.map(o => o.responses).flat();
@@ -739,20 +766,20 @@ class Message {
         }
 
         try {
-          let request = await axios.get(`https://api.twitch.tv/kraken/users?login=${channel}`, {
-            headers: {
-              'Accept': 'application/vnd.twitchtv.v5+json',
-              'Authorization': 'OAuth ' + token,
-            },
-          });
-          const channelId = request.data.users[0]._id;
-          request = await axios.get(`https://api.twitch.tv/helix/streams?user_id=${channelId}`, {
+          let request = await axios.get(`https://api.twitch.tv/helix/search/channels?query=${channel}`, {
             headers: {
               'Authorization': 'Bearer ' + token,
               'Client-ID': oauth.botClientId,
             },
           });
-          return api.getGameFromId(request.data.data[0].game_id);
+          const channelId = request.data.users[0]._id;
+          request = await axios.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${channelId}`, {
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Client-ID': oauth.botClientId,
+            },
+          });
+          return request.data.data[0].game_name;
         } catch (e) {
           return 'n/a';
         } // return nothing on error
@@ -766,15 +793,15 @@ class Message {
         }
 
         try {
-          let request = await axios.get(`https://api.twitch.tv/kraken/users?login=${channel}`, {
+          let request = await axios.get(`https://api.twitch.tv/helix/search/channels?query=${channel}`, {
             headers: {
-              'Accept': 'application/vnd.twitchtv.v5+json',
-              'Authorization': 'OAuth ' + token,
+              'Authorization': 'Bearer ' + token,
+              'Client-ID': oauth.botClientId,
             },
           });
 
           const channelId = request.data.users[0]._id;
-          request = await axios.get(`https://api.twitch.tv/helix/streams?user_id=${channelId}`, {
+          request = await axios.get(`https://api.twitch.tv/helix/channels?broadcaster_id=${channelId}`, {
             headers: {
               'Authorization': 'Bearer ' + token,
               'Client-ID': oauth.botClientId,
@@ -797,13 +824,13 @@ class Message {
         }
 
         try {
-          let request = await axios.get(`https://api.twitch.tv/kraken/users?login=${channel}`, {
+          let request = await axios.get(`https://api.twitch.tv/helix/search/channels?query=${channel}`, {
             headers: {
-              'Accept': 'application/vnd.twitchtv.v5+json',
-              'Authorization': 'OAuth ' + token,
+              'Authorization': 'Bearer ' + token,
+              'Client-ID': oauth.botClientId,
             },
           });
-          const channelId = request.data.users[0]._id;
+          const channelId = request.data.data[0].id;
           request = await axios.get(`https://api.twitch.tv/helix/streams?user_id=${channelId}`, {
             headers: {
               'Authorization': 'Bearer ' + token,

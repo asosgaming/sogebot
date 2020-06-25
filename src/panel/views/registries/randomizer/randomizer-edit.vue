@@ -119,6 +119,7 @@
 
       tts(:tts.sync="item.tts" :uuid="item.id")
       font(:data.sync="item.customizationFont" key="randomizer-font")
+      position(:position.sync="item.position" key="randomizer-position" v-if="item.type === 'simple'")
 
       b-card(no-body).mt-2
         b-card-header
@@ -237,6 +238,7 @@ Component.registerHooks([
   components: {
     tts: () => import('../alerts/components/tts.vue'),
     font: () => import('src/panel/components/font.vue'),
+    position: () => import('src/panel/components/position.vue'),
     loading: () => import('../../../components/loading.vue'),
   },
   filters: {
@@ -293,12 +295,19 @@ export default class randomizerEdit extends Vue {
       volume: 0.5,
       rate: 1,
     },
+    position: {
+      x: 0,
+      y: 0,
+      anchorX: 'left',
+      anchorY: 'top',
+    },
     customizationFont: {
       family: 'PT Sans',
       weight: 500,
       size: 16,
       borderColor: '#000000',
       borderPx: 1,
+      shadow: [],
     }
   };
 
@@ -514,6 +523,9 @@ export default class randomizerEdit extends Vue {
 
             // workaround for missing weight after https://github.com/sogehige/sogeBot/issues/3871
             d.customizationFont.weight = d.customizationFont.weight ?? 500;
+
+            // workaround for missing shadow settings after https://github.com/sogehige/sogeBot/issues/3875
+            d.customizationFont.shadow = d.customizationFont.shadow ?? [];
 
             this.item = d;
             this.isShown = d.isShown;
