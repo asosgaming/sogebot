@@ -1,4 +1,4 @@
-NOW=$(date +%s)
-docker build -t asos/sogebot:$NOW .
-docker push asos/sogebot:$NOW
-cloudron install --image asos/sogebot:$NOW
+VERSION=$(sed -nE 's/^\s*"version": "(.*?)",$/\1/p' package.json)
+docker build -t asos/sogebot:$VERSION .
+docker push asos/sogebot:$VERSION
+cloudron install --image asos/sogebot:$VERSION
