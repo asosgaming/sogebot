@@ -34,7 +34,15 @@ EXPOSE  20000
 # Expose HTTPS port to the outside
 EXPOSE  20443
 # Expose profiler to the outside
-EXPOSE 9229
+EXPOSE  9229
+
+## Cloudron config settings
+#ADD bin/start.sh /sogebot/
+# Supervisor
+#ADD supervisor/ /etc/supervisor/conf.d/
+#RUN sed -e 's,^logfile=.*$,logfile=/run/supervisord.log,' -i /etc/supervisor/supervisord.conf
+#RUN sed -e 's,^chmod=.*$,chmod=0760\nchown=cloudron:cloudron,' -i /etc/supervisor/supervisord.conf
+
 
 # Add startup script
 COPY docker.sh /
