@@ -10,8 +10,8 @@ services:
     volumes:
     - /srv/docker/bind:/data
     environment:
-    - ROOT_PASSWORD=@Car08Ram$
+    - ROOT_PASSWORD=changeme
     mariadb:
     image: mariadb
     environment: 
-      MYSQL_ROOT_PASSWORD: Car08Ram
+      MYSQL_ROOT_PASSWORD: password
