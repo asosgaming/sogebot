@@ -3,6 +3,25 @@
     "edit": "Bearbeiten",
     "add": "Hinzufügen"
   },
+  "position": {
+    "settings": "Position settings",
+    "anchorX": "Anchor X position",
+    "anchorY": "Anchor Y position",
+    "left": "Left",
+    "right": "Right",
+    "middle": "Middle",
+    "top": "Top",
+    "bottom": "Bottom",
+    "x": "X",
+    "y": "Y"
+  },
+  "font": {
+    "shadowShiftRight": "Shift Right",
+    "shadowShiftDown": "Shift Down",
+    "shadowBlur": "Blur",
+    "shadowOpacity": "Opacity",
+    "color": "Color"
+  },
   "errors": {
     "required": "Diese Eingabe darf nicht leer sein.",
     "minValue": "Der niedrigste Wert dieser Eingabe ist $value."

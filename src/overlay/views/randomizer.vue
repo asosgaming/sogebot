@@ -3,17 +3,22 @@
   <div v-if="urlParam('debug')" class="debug">
     <json-viewer :value="data || {}" boxed copyable :expand-depth="4"></json-viewer>
   </div>
-  <div
-    v-show="showSimpleBlink"
-    v-if="data && data.type === 'simple'" :style="{
-    color: generateItems(data.items)[showSimpleValueIndex].color,
-    'font-size': data.customizationFont.size + 'px',
-    'font-weight': data.customizationFont.weight,
-    'font-family': data.customizationFont.family,
-    'text-align': 'center',
-    'text-shadow': textStrokeGenerator(data.customizationFont.borderPx, data.customizationFont.borderColor)
-    }">
-    {{ generateItems(data.items)[showSimpleValueIndex].name }}
+  <div id="simpleRandomizer">
+    <div v-if="data && data.type === 'simple'">
+      <div
+        style="position: absolute"
+        v-for="(item, index) in generateItems(data.items)" :key="'simple-' + index"
+        :style="{
+          visibility: showSimpleBlink && index === showSimpleValueIndex ? 'visible' : 'hidden',
+          color: item.color,
+          'font-size': data.customizationFont.size + 'px',
+          'font-weight': data.customizationFont.weight,
+          'font-family': data.customizationFont.family,
+          'text-shadow': [textStrokeGenerator(data.customizationFont.borderPx, data.customizationFont.borderColor), shadowGenerator(data.customizationFont.shadow)].filter(Boolean).join(', '),
+          'transform': position[index] ? position[index] : '',
+        }"
+      > {{ item.name }} </div>
+    </div>
   </div>
   <div v-if="data && data.type === 'wheelOfFortune'">
     <canvas id='canvas' ref="canvas" width="1920" height="1080" style="width: 100%; height: 100%" data-responsiveMinWidth="180"
@@ -28,7 +33,7 @@
       'font-family': data.customizationFont.family,
       'text-align': 'center',
       'background-color': wheelWin.fillStyle, // add alpha
-      'text-shadow': textStrokeGenerator(data.customizationFont.borderPx, data.customizationFont.borderColor)
+      'text-shadow': [textStrokeGenerator(data.customizationFont.borderPx, data.customizationFont.borderColor), shadowGenerator(data.customizationFont.shadow)].filter(Boolean).join(', ')
     }">{{wheelWin.text}}</div>
   </div>
 </div>
@@ -45,6 +50,7 @@ import Winwheel from 'winwheel'
 import JsonViewer from 'vue-json-viewer'
 
 import { getSocket } from 'src/panel/helpers/socket';
+import { textStrokeGenerator, shadowGenerator } from 'src/panel/helpers/text';
 import { getContrastColor } from 'src/panel/helpers/color';
 
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -71,6 +77,8 @@ declare global {
 })
 export default class RandomizerOverlay extends Vue {
   getContrastColor = getContrastColor;
+  textStrokeGenerator = textStrokeGenerator;
+  shadowGenerator = shadowGenerator;
 
   loadedFonts: string[] = [];
 
@@ -87,6 +95,8 @@ export default class RandomizerOverlay extends Vue {
 
   theWheel: any = null;
   wheelWin: any = null;
+
+  position: string[] = [];
 
   speak(text: string, voice: string, rate: number, pitch: number, volume: number) {
     window.responsiveVoice.speak(text, voice, { rate, pitch, volume });
@@ -143,6 +153,7 @@ export default class RandomizerOverlay extends Vue {
         const head = document.getElementsByTagName('head')[0];
         const style = document.createElement('style');
         style.type = 'text/css';
+
         if (!this.loadedFonts.includes(data.customizationFont.family)) {
           console.debug('Loading font', data.customizationFont.family)
           this.loadedFonts.push(data.customizationFont.family)
@@ -160,6 +171,9 @@ export default class RandomizerOverlay extends Vue {
         }
 
         this.$nextTick(() => {
+          if (data.type === 'simple') {
+            this.positionGenerator();
+          }
           if (shouldReinitWof && data.type === 'wheelOfFortune') {
             function playSound() {
               if (data.shouldPlayTick) {
@@ -244,27 +258,6 @@ export default class RandomizerOverlay extends Vue {
     ctx.fill();                   // Then fill.
   }
 
-  textStrokeGenerator(radius: number, color: string) {
-    if (radius === 0) return ''
-
-    // config
-    const steps = 30;
-    const blur = 2;
-    // generate text shadows, spread evenly around a circle
-    const radianStep = steps / (Math.PI * 2);
-    let cssStr = '';
-    for (let r=1; r <= radius; r++) {
-      for(let i=0; i < steps; i++) {
-        const curRads = radianStep * i;
-        const xOffset = (r * Math.sin(curRads)).toFixed(1);
-        const yOffset = (r * Math.cos(curRads)).toFixed(1);
-        if(i > 0 || r > 1) cssStr += ", ";
-        cssStr += xOffset + "px " + yOffset + "px " + blur + "px " + color;
-      }
-    }
-    return cssStr
-  }
-
   spin() {
     if (this.data !== null) {
       if (this.data.type === 'wheelOfFortune' && this.theWheel) {
@@ -331,6 +324,41 @@ export default class RandomizerOverlay extends Vue {
           }
         }
         next();
+      }
+    }
+  }
+
+  positionGenerator() {
+    this.position = [];
+    const el = document.getElementById('simpleRandomizer');
+    if (el) {
+      const child = el.children[0];
+      if (child) {
+        const child2 = child.children;
+        for (let i = 0; i < child2.length; i++) {
+          if (child2[i] && this.data) {
+            const widthPxPerCent = window.innerWidth / 100;
+            const heightPxPerCent = window.innerHeight / 100;
+
+            let top = 0;
+            if (this.data.position.anchorY === 'middle') {
+              top = Number(window.getComputedStyle(child2[i]).getPropertyValue('height').replace('px', '')) / 2;
+            } else if (this.data.position.anchorY === 'bottom') {
+              top = Number(window.getComputedStyle(child2[i]).getPropertyValue('height').replace('px', ''));
+            }
+
+            let left = 0;
+            if (this.data.position.anchorX === 'middle') {
+              left = Number(window.getComputedStyle(child2[i]).getPropertyValue('width').replace('px', '')) / 2;
+            } else if (this.data.position.anchorX === 'right') {
+              left = Number(window.getComputedStyle(child2[i]).getPropertyValue('width').replace('px', ''));
+            }
+
+            this.position[i] = `translate(${(this.data.position.x * widthPxPerCent) - left}px, ${(this.data.position.y * heightPxPerCent) - top}px)`;
+          } else {
+            this.position[i] = `translate(0, 0)`;
+          }
+        }
       }
     }
   }

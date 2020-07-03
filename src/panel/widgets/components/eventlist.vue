@@ -60,9 +60,12 @@
                   :key="index"
                   :active="selected.includes(event.id)"
                   style="cursor: pointer; border-left: 0; border-right: 0; padding: 0.2rem 1.25rem 0.4rem 1.25rem"
+                  :style="{opacity: event.isTest ? 0.75 : 1}"
                   @click="state.editation !== $state.idle ? toggleSelected(event) : null"
                 )
                   i(:title="moment(event.timestamp).format('LLLL')").eventlist-text
+                    span(v-if="event.isTest").text-danger TEST
+                    |
                     | {{moment(event.timestamp).fromNow()}}
                   div(:style="{'font-size': eventlistSize + 'px'}").eventlist-username
                     div.d-flex
@@ -282,6 +285,7 @@ export default {
       t = t.replace('$subStreakName', get(values, 'subStreakName', 'months'))
       t = t.replace('$subStreak', '<strong style="font-size: 1rem">' + get(values, 'subStreak', '0') + '</strong>')
       t = t.replace('$bits', '<strong style="font-size: 1rem">' + get(values, 'bits', '0') + '</strong>')
+      t = t.replace('$count', '<strong style="font-size: 1rem">' + get(values, 'count', '0') + '</strong>')
 
       let output = `<span style="font-size:0.7rem; font-weight: normal">${t}</span>`
       if (values.song_url && values.song_title) output += `<div style="font-size: 0.7rem"><strong>${this.translate('song-request')}:</strong> <a href="${values.song_url}">${values.song_title}</a></div>`

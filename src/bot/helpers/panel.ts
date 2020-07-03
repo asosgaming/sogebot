@@ -2,7 +2,6 @@ import io from 'socket.io';
 import https from 'https';
 import http, { Server } from 'http';
 import express from 'express';
-import pem from 'pem';
 import fs from 'fs';
 
 import type { IconName } from '@fortawesome/free-solid-svg-icons';
@@ -55,18 +54,7 @@ export const setServer = () => {
         ioServer.attach(serverSecure);
       }
     } else {
-      info('Generating self-signed certificate for HTTPS');
-      pem.createCertificate({ days: 99999, selfSigned: true }, function (err, keys) {
-        if (err) {
-          throw err;
-        }
-        if (app) {
-          serverSecure = https.createServer({ key: keys.serviceKey, cert: keys.certificate }, app);
-          if (ioServer) {
-            ioServer.attach(serverSecure);
-          }
-        }
-      });
+      info(`No certificates were provided, serving only HTTP.`);
     }
   }
 };

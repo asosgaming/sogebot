@@ -34,7 +34,7 @@
             'color': goal.customizationFont.color,
             'font-weight': goal.customizationFont.weight,
             'font-size': goal.customizationFont.size + 'px',
-            'text-shadow': textStrokeGenerator(goal.customizationFont.borderPx, goal.customizationFont.borderColor)
+            'text-shadow': [textStrokeGenerator(goal.customizationFont.borderPx, goal.customizationFont.borderColor), shadowGenerator(goal.customizationFont.shadow)].filter(Boolean).join(', ')
           }">
           <div class="col-4 text-left text-nowrap pl-2 pr-2">{{ goal.name }}</div>
           <div class="col-4 text-nowrap text-center">
@@ -61,7 +61,7 @@
           :style="{
             'color': goal.customizationFont.color,
             'font-size': goal.customizationFont.size + 'px',
-            'text-shadow': textStrokeGenerator(goal.customizationFont.borderPx, goal.customizationFont.borderColor)
+            'text-shadow': [textStrokeGenerator(goal.customizationFont.borderPx, goal.customizationFont.borderColor), shadowGenerator(goal.customizationFont.shadow)].filter(Boolean).join(', ')
           }">
           <div class="col text-center text-truncate pl-2 pr-2">{{ goal.name }}</div>
         </div>
@@ -89,7 +89,7 @@
               'width': '100%',
               'color': goal.customizationFont.color,
               'font-size': goal.customizationFont.size + 'px',
-              'text-shadow': textStrokeGenerator(goal.customizationFont.borderPx, goal.customizationFont.borderColor)
+              'text-shadow': [textStrokeGenerator(goal.customizationFont.borderPx, goal.customizationFont.borderColor), shadowGenerator(goal.customizationFont.shadow)].filter(Boolean).join(', ')
             }">
             <div class="col text-center">
               <template v-if="goal.type === 'tips'">
@@ -104,7 +104,7 @@
             'width': '100%',
             'color': goal.customizationFont.color,
             'font-size': goal.customizationFont.size + 'px',
-            'text-shadow': textStrokeGenerator(goal.customizationFont.borderPx, goal.customizationFont.borderColor)
+            'text-shadow': [textStrokeGenerator(goal.customizationFont.borderPx, goal.customizationFont.borderColor), shadowGenerator(goal.customizationFont.shadow)].filter(Boolean).join(', ')
           }">
           <div class="col text-left pl-2">
             <template v-if="goal.type === 'tips'">
@@ -135,9 +135,11 @@
 
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
-import { getSocket } from 'src/panel/helpers/socket';
 import safeEval from 'safe-eval';
 import { find } from 'lodash-es';
+
+import { getSocket } from 'src/panel/helpers/socket';
+import { textStrokeGenerator, shadowGenerator } from 'src/panel/helpers/text';
 
 import BootstrapVue from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
@@ -158,6 +160,9 @@ import { GoalInterface, GoalGroupInterface } from 'src/bot/database/entity/goal'
 
 @Component({})
 export default class GoalsOverlay extends Vue {
+  textStrokeGenerator = textStrokeGenerator;
+  shadowGenerator = shadowGenerator;
+
   show: number = -1;
   group: GoalGroupInterface | null = null;
   loadedFonts: string[] = [];
@@ -228,27 +233,6 @@ export default class GoalsOverlay extends Vue {
 
     const goal = this.group.goals[idx]
     return new Date(goal.endAfter).getTime() <= new Date().getTime() && !goal.endAfterIgnore
-  }
-
-  textStrokeGenerator(radius: number, color: string) {
-    if (radius === 0) return ''
-
-    // config
-    const steps = 30;
-    const blur = 2;
-    // generate text shadows, spread evenly around a circle
-    const radianStep = steps / (Math.PI * 2);
-    let cssStr = '';
-    for (let r=1; r <= radius; r++) {
-      for(let i=0; i < steps; i++) {
-        const curRads = radianStep * i;
-        const xOffset = (r * Math.sin(curRads)).toFixed(1);
-        const yOffset = (r * Math.cos(curRads)).toFixed(1);
-        if(i > 0 || r > 1) cssStr += ", ";
-        cssStr += xOffset + "px " + yOffset + "px " + blur + "px " + color;
-      }
-    }
-    return cssStr
   }
 
   getFontFamilyCSS (family: string) {
