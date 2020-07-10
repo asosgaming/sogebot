@@ -1,0 +1,20 @@
+## This file is a template. save to your working director as docker-compose.yml after making changes
+## you may also run "$ cp $PWD/src-docker-compose.yml $PWD/docker-compose.yml"
+## The prefered method is editing the file with your default editor and saving as docker-compose.yml 
+version: '2'
+services:
+  sogeBot:
+    restart: always
+    image: asos/sogebot
+    ports:
+    - "20000:20000/udp"
+    - "20443:20443/tcp"
+    - "9229:9229/tcp"
+    volumes:
+    - /srv/docker/bind:/data
+    environment:
+    - ROOT_PASSWORD=changeme
+    mariadb:
+    image: mariadb
+    environment: 
+      MYSQL_ROOT_PASSWORD: password

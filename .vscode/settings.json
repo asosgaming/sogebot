@@ -1,4 +1,6 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
   "debug.node.autoAttach": "on",
+  "jira-plugin.workingProject": "",
+  "python.pythonPath": "/usr/bin/python3",
 }

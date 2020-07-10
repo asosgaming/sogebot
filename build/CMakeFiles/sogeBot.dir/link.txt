@@ -1,0 +1,1 @@
+/bin/g++-9  -g  -rdynamic CMakeFiles/sogeBot.dir/main.cpp.o  -o sogeBot 

@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/chad/sogebot/build",
+  "command": "/bin/g++-9    -g   -o CMakeFiles/sogeBot.dir/main.cpp.o -c /home/chad/sogebot/main.cpp",
+  "file": "/home/chad/sogebot/main.cpp"
+}
+]
