@@ -1,5 +1,5 @@
 FROM node:stretch-slim
-MAINTAINER Chad Reesey <chad.reesey@asosgaming.com>
+LABEL maintainer="Chad Reesey <chad.reesey@asosgaming.com>"
 
 ENV LAST_UPDATED 2020-11-05-1440
 
