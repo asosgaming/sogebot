@@ -1,20 +1,26 @@
 /* global describe it before */
+const assert = require('assert');
 
+const _ = require('lodash');
 require('../../general.js');
 
-const db = require('../../general.js').db;
-const message = require('../../general.js').message;
 const alias = (require('../../../dest/systems/alias')).default;
 const moderation = (require('../../../dest/systems/moderation')).default;
 const songs = (require('../../../dest/systems/songs')).default;
+const message = require('../../general.js').message;
+const db = require('../../general.js').db;
 
 // users
-const owner = { username: 'soge__' };
-
-const _ = require('lodash');
-const assert = require('assert');
+const owner = { userName: '__broadcaster__' };
 
 const tests = {
+  'domain:prtzl.io': {
+    'should.return.changed': [
+      'Now Playing: Eden (Waveshaper Remix) - Instrumental by Scandroid -> https://prtzl.io/QbHKjGenxvZg49uG',
+    ],
+    'should.return.same': [
+    ],
+  },
   'osu.ppy.sh': {
     'should.return.changed': [
       'Lorem Ipsum osu.ppy.sh dolor sit amet',
@@ -164,13 +170,14 @@ const tests = {
   },
 };
 
-describe('systems/moderation - whitelist()', () => {
+describe('systems/moderation - whitelist() - @func1', () => {
   before(async () => {
     await db.cleanup();
     await message.prepare();
 
     const r = await alias.add({ sender: owner, parameters: '-a !sr -c !songrequest' });
     assert.strictEqual(r[0].response, '$sender, alias !sr for !songrequest was added');
+    await songs.setCommand('!songrequest', '!songrequest');
   });
 
   for (const [pattern, test] of Object.entries(tests)) {
@@ -191,6 +198,10 @@ describe('systems/moderation - whitelist()', () => {
   }
 
   describe(`#2392 - changed !songrequest => !zahrej should be whitelisted`, () => {
+    after(async () => {
+      await songs.setCommand('!songrequest', '!songrequest');
+    });
+
     it('change command from !songrequest => !zahrej', async () => {
       await songs.setCommand('!songrequest', '!zahrej');
     });

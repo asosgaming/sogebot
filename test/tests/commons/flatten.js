@@ -10,7 +10,7 @@ const { flatten, unflatten } = require('../../../dest/helpers/flatten');
 
 const assert = require('assert');
 
-describe('lib/commons - flatten()', () => {
+describe('lib/commons - @func2 - flatten()', () => {
   it('Object with string should be correctly flatten', async () => {
     const object = { a: { b: { c: { d: { e: { f: 'lorem'}}}}}};
     assert.deepEqual(flatten(object), { 'a.b.c.d.e.f': 'lorem' });
@@ -22,7 +22,7 @@ describe('lib/commons - flatten()', () => {
   });
 });
 
-describe('lib/commons - unflatten()', () => {
+describe('lib/commons - @func2 - unflatten()', () => {
   it('Object with string should be correctly unflatten', async () => {
     const object = { a: { b: { c: { d: { e: { f: 'lorem'}}}}}};
     assert.deepEqual(unflatten({ 'a.b.c.d.e.f': 'lorem' }), object);
@@ -34,10 +34,10 @@ describe('lib/commons - unflatten()', () => {
   });
 
   it('Array of object should be correctly unflatten', async () => {
-    const object = [ { username: 'test' }, { username: 'test2' }, { 'user.name': 'test3' } ];
+    const object = [ { userName: 'test' }, { userName: 'test2' }, { 'user.name': 'test3' } ];
     assert.deepEqual(unflatten(object), [
-      { username: 'test' },
-      { username: 'test2' },
+      { userName: 'test' },
+      { userName: 'test2' },
       { user: { name: 'test3' } },
     ]);
   });

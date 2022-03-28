@@ -1,6 +1,6 @@
 /* global describe it before */
 
-const { permission } = require('../../../dest/helpers/permissions');
+const { defaultPermissions } = require('../../../dest/helpers/permissions/');
 const Parser = require('../../../dest/parser').default;
 
 require('../../general.js');
@@ -21,7 +21,7 @@ _.set(global, 'widgets.custom_variables.io.emit', function () {
   return;
 });
 
-describe('Custom Variable - #3379 - Command reply should return correct reply', () => {
+describe('Custom Variable - #3379 - Command reply should return correct reply - @func1', () => {
   before(async () => {
     await db.cleanup();
     await message.prepare();
@@ -36,10 +36,10 @@ describe('Custom Variable - #3379 - Command reply should return correct reply', 
     await getRepository(Variable).save({
       variableName: '$_variable',
       readOnly: false,
-      currentValue: 0,
+      currentValue: '0',
       type: 'number',
       responseType: 2,
-      permission: permission.VIEWERS,
+      permission: defaultPermissions.VIEWERS,
       evalValue: '',
       usableOptions: [],
     });

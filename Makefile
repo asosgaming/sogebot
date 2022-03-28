@@ -3,7 +3,7 @@ SHELL        := /bin/bash
 VERSION      := `node -pe "require('./package.json').version"`
 ENV          ?= production
 
-all : info clean dependencies patch css ui bot
+all : info clean dependencies bot
 .PHONY : all
 
 info:
@@ -12,17 +12,22 @@ info:
 	@git log --oneline -3 | cat
 
 dependencies:
-	@echo -ne "\n\t ----- Installation of production dependencies\n"
-	@npm install --production
-	@echo -ne "\n\t ----- Installation of development dependencies\n"
-	@npm install --only=dev
-
-patch:
+	@echo -ne "\n\t ----- Cleaning up dependencies\n"
+	@rm -rf node_modules
+	@echo -ne "\n\t ----- Installation of dependencies\n"
+ifeq ($(ENV),production)
+	npm ci --also=dev
+else
+	npm cache clean --force
+	rm package-lock.json || true
+	npm install --also=dev
+	sed -i 's/git+ssh/git+https/g' package-lock.json
+endif
+	@echo -ne "\n\t ----- Installation of husky\n"
+	npx husky install
 	@echo -ne "\n\t ----- Going through node_modules patches\n"
 	# How to create node_modules patch: https://opensource.christmas/2019/4
-	patch --forward node_modules/twitch-js/types/index.d.ts < patches/twitch-js-types.patch
-	patch --forward node_modules/twitch-js/types/index.d.ts < patches/twitch-js-types-2.patch
-	patch --forward node_modules/twitch-js/types/index.d.ts < patches/twitch-js-add-highlight-msgId.patch
+	patch --forward node_modules/obs-websocket-js/types/index.d.ts < patches/obswebsocketTypeExpose.patch
 
 eslint:
 	@echo -ne "\n\t ----- Checking eslint\n"
@@ -32,25 +37,22 @@ jsonlint:
 	@echo -ne "\n\t ----- Checking jsonlint\n"
 	for a in $$(find ./locales -type f -iname "*.json" -print); do /bin/false; jsonlint $$a -q; done
 
-css:
-	@echo -ne "\n\t ----- Generating CSS themes\n"
-	@npx node-sass --output-style expanded --precision 6 scss/themes/light.scss public/dist/css/light.css
-	@npx node-sass --output-style expanded --precision 6 scss/themes/dark.scss public/dist/css/dark.css
-	@npx postcss public/dist/css/*.css --use autoprefixer -d public/dist/css/
-
-ui:
-	@echo -ne "\n\t ----- Bundling with webpack ($(ENV))\n"
-	@VERSION=${VERSION} NODE_ENV=$(ENV) node --max_old_space_size=4096 ./node_modules/webpack/bin/webpack.js --progress
-
 bot:
+	@rm -rf dest
+ifeq ($(ENV),production)
+	@echo -ne "\n\t ----- Building bot (strip comments)\n"
+	@npx tsc --removeComments true
+else
 	@echo -ne "\n\t ----- Building bot\n"
-	@npx tsc -p src/bot
+	@npx tsc --removeComments false
+endif
+	@npx tsc-alias
 
 pack:
 	@echo -ne "\n\t ----- Packing into sogeBot-$(VERSION).zip\n"
-	@cp ./src/bot/data/.env* ./
-	@cp ./src/bot/data/.env.sqlite ./.env
-	@npx bestzip sogeBot-$(VERSION).zip .npmrc .env* package-lock.json dest/ locales/ public/ LICENSE package.json docs/ AUTHORS tools/ bin/ bat/ fonts.json
+	@cp ./src/data/.env* ./
+	@cp ./src/data/.env.sqlite ./.env
+	@npx bestzip sogeBot-$(VERSION).zip .npmrc .env* package-lock.json patches/ dest/ locales/ LICENSE package.json docs/ AUTHORS tools/ bin/ bat/ fonts.json assets/ favicon.ico
 
 prepare:
 	@echo -ne "\n\t ----- Cleaning up node_modules\n"
@@ -58,5 +60,5 @@ prepare:
 
 clean:
 	@echo -ne "\n\t ----- Cleaning up compiled files\n"
-	@rm -rf public/dist/bootstrap* public/dist/carousel/* public/dist/gallery/* public/dist/jquery public/dist/lodash public/dist/velocity-animate public/dist/popper.js public/dist/flv.js public/dist/css/dark.css public/dist/css/light.css
+	@rm -rf public/dist/bootstrap* public/dist/carousel/* public/dist/gallery/* public/dist/jquery public/dist/lodash public/dist/velocity-animate public/dist/popper.js public/dist/flv.js
 	@rm -rf dest

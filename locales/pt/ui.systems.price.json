@@ -1,0 +1,14 @@
+{
+  "emitRedeemEvent": "Emitir evento de resgate mesmo se os bits são usados",
+  "price": {
+    "name": "preço",
+    "placeholder": ""
+  },
+  "error": {
+    "isEmpty": "Este valor não pode ficar vazio"
+  },
+  "warning": "Esta ação não pode ser revertida!",
+  "settings": {
+    "enabled": "Situação"
+  }
+}

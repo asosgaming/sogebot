@@ -13,7 +13,7 @@ const { Keyword } = require('../../../dest/database/entity/keyword');
 const keywords = (require('../../../dest/systems/keywords')).default;
 
 // users
-const owner = { userId: Math.floor(Math.random() * 100000), username: 'soge__' };
+const owner = { userId: String(Math.floor(Math.random() * 100000)), userName: '__broadcaster__' };
 
 function randomString() {
   return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
@@ -21,7 +21,8 @@ function randomString() {
 function generateCommand(opts) {
   const k = opts.keyword ? '-k ' + opts.keyword : null;
   const r = opts.response ? '-r ' + opts.response : null;
-  return [k, r].join(' ').trim();
+  const rid = typeof opts.rid !== 'undefined' ? '-rId ' + opts.rid : null;
+  return [k, r, rid].join(' ').trim();
 }
 
 const failedTests = [
@@ -33,7 +34,7 @@ const failedTests = [
 
 const successTests = [
   {
-    keyword: 'test', response: '(!me)', actualResponse: '@soge__ | 0.0h | 0 points | 0 messages | 0.00€ | 0 bits',
+    keyword: 'test', response: '(!me)', actualResponse: '@__broadcaster__ | Level 0 | 0 hours | 0 points | 0 messages | €0.00 | 0 bits | 0 months',
     tests: [
       { type: 'add' },
       { type: 'run', triggers: ['This line will be triggered test'], '-triggers': [] },
@@ -99,7 +100,7 @@ const successTests = [
 ];
 
 
-describe('Keywords - basic worflow (add, run, edit)', () => {
+describe('Keywords - basic worflow (add, run, edit) - @func2', () => {
   describe('Expected parsed fail', () => {
     before(async () => {
       await db.cleanup();
@@ -152,7 +153,7 @@ describe('Keywords - basic worflow (add, run, edit)', () => {
             case 'edit':
               it (`edit() | ${test.response} => ${test.editResponse}`, async () => {
                 test.response = test.editResponse;
-                const r = await keywords.edit({ sender: owner, parameters: generateCommand({...test, ...t}) });
+                const r = await keywords.edit({ sender: owner, parameters: generateCommand({...test, ...t, rid: 1}) });
                 assert.strictEqual(r[0].response, `$sender, keyword ${test.keyword} is changed to '${test.response}'`);
               });
               break;

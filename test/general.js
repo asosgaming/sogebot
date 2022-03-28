@@ -1,11 +1,24 @@
 global.mocha = true;
+require('./mocks');
 require('../dest/main.js');
+require('./mocks.js');
+const { VariableWatcher } = require('../dest/watchers');
+
+beforeEach(async () => {
+  await VariableWatcher.check();
+});
+
+let url = 'http://sogebot.github.io/sogeBot/#';
+if ((process.env?.npm_package_version ?? 'x.y.z-SNAPSHOT').includes('SNAPSHOT')) {
+  url = 'http://sogebot.github.io/sogeBot/#/_master';
+}
 
 module.exports = {
-  db: require('./helpers/db'),
-  message: require('./helpers/messages'),
-  user: require('./helpers/user'),
-  tmi: require('./helpers/tmi'),
+  url,
+  db:       require('./helpers/db'),
+  message:  require('./helpers/messages'),
+  user:     require('./helpers/user'),
+  tmi:      require('./helpers/tmi'),
   variable: require('./helpers/variable'),
-  time: require('./helpers/time'),
+  time:     require('./helpers/time'),
 };

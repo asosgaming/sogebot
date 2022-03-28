@@ -8,7 +8,7 @@ const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 const assert = require('assert');
 
-const { permission } = require('../../../dest/helpers/permissions');
+const { defaultPermissions } = require('../../../dest/helpers/permissions/');
 
 const { getRepository } = require('typeorm');
 const { Commands } = require('../../../dest/database/entity/commands');
@@ -17,51 +17,51 @@ const { User } = require('../../../dest/database/entity/user');
 const customcommands = (require('../../../dest/systems/customcommands')).default;
 
 // users
-const owner = { username: 'soge__', userId: Math.floor(Math.random() * 100000) };
-const user1 = { username: 'user1', userId: Math.floor(Math.random() * 100000) };
+const owner = { userName: '__broadcaster__', userId: String(Math.floor(Math.random() * 100000)) };
+const user1 = { userName: 'user1', userId: String(Math.floor(Math.random() * 100000)) };
 
-describe('Custom Commands - run()', () => {
+describe('Custom Commands - @func1 - run()', () => {
   before(async () => {
     await db.cleanup();
     message.prepare();
 
-    await getRepository(User).save({ username: owner.username, userId: owner.userId });
-    await getRepository(User).save({ username: user1.username, userId: user1.userId });
+    await getRepository(User).save({ userName: owner.userName, userId: owner.userId });
+    await getRepository(User).save({ userName: user1.userName, userId: user1.userId });
   });
 
   describe('\'!test qwerty\' should trigger correct commands', () => {
     it('create \'!test\' command with $_variable', async () => {
       await getRepository(Commands).save({
         id: uuid(), command: '!test', enabled: true, visible: true, responses: [{
-          filter: '', response: '$_variable', permission: permission.VIEWERS, stopIfExecuted: false, order: 0,
+          filter: '', response: '$_variable', permission: defaultPermissions.VIEWERS, stopIfExecuted: false, order: 0,
         }],
       });
     });
     it('create \'!test\' command with $param', async () => {
       await getRepository(Commands).save({
         id: uuid(), command: '!test', enabled: true, visible: true, responses: [{
-          filter: '', response: '$param by !test command with param', permission: permission.VIEWERS, stopIfExecuted: false, order: 0,
+          filter: '', response: '$param by !test command with param', permission: defaultPermissions.VIEWERS, stopIfExecuted: false, order: 0,
         }],
       });
     });
     it('create \'!test\' command without $param', async () => {
       await getRepository(Commands).save({
         id: uuid(), command: '!test', enabled: true, visible: true, responses: [{
-          filter: '!$haveParam', response: 'This should not be triggered', permission: permission.VIEWERS, stopIfExecuted: false, order: 0,
+          filter: '!$haveParam', response: 'This should not be triggered', permission: defaultPermissions.VIEWERS, stopIfExecuted: false, order: 0,
         }],
       });
     });
     it('create \'!test qwerty\' command without $param', async () => {
       await getRepository(Commands).save({
         id: uuid(), command: '!test qwerty', enabled: true, visible: true, responses: [{
-          filter: '', response: 'This should be triggered', permission: permission.VIEWERS, stopIfExecuted: false, order: 0,
+          filter: '', response: 'This should be triggered', permission: defaultPermissions.VIEWERS, stopIfExecuted: false, order: 0,
         }],
       });
     });
     it('create second \'!test qwerty\' command without $param', async () => {
       await getRepository(Commands).save({
         id: uuid(), command: '!test qwerty', enabled: true, visible: true, responses: [{
-          filter: '', response: 'This should be triggered as well', permission: permission.VIEWERS, stopIfExecuted: false, order: 0,
+          filter: '', response: 'This should be triggered as well', permission: defaultPermissions.VIEWERS, stopIfExecuted: false, order: 0,
         }],
       });
     });
@@ -69,7 +69,7 @@ describe('Custom Commands - run()', () => {
     it('run command by owner', async () => {
       await customcommands.run({ sender: owner, message: '!test qwerty', parameters: 'qwerty' });
       await message.isSentRaw('qwerty by !test command with param', owner);
-      await message.isSentRaw('@soge__, $_variable was set to qwerty.', owner);
+      await message.isSentRaw('@__broadcaster__, $_variable was set to qwerty.', owner);
       await message.isSentRaw('This should be triggered', owner);
       await message.isSentRaw('This should be triggered as well', owner);
       await message.isNotSentRaw('This should not be triggered', owner);
@@ -92,7 +92,7 @@ describe('Custom Commands - run()', () => {
     it('create command and response with filter', async () => {
       await getRepository(Commands).save({
         id: uuid(), command: '!cmd', enabled: true, visible: true, responses: [{
-          filter: '$sender == "user1"', response: 'Lorem Ipsum', permission: permission.VIEWERS, stopIfExecuted: false, order: 0,
+          filter: '$sender == "user1"', response: 'Lorem Ipsum', permission: defaultPermissions.VIEWERS, stopIfExecuted: false, order: 0,
         }],
       });
     });
@@ -115,7 +115,7 @@ describe('Custom Commands - run()', () => {
     customcommands.run({ sender: owner, message: '!a', parameters: '' });
     await message.isSentRaw('Lorem Ipsum', owner);
 
-    const r2 = await customcommands.remove({ sender: owner, parameters: '!a' });
+    const r2 = await customcommands.remove({ sender: owner, parameters: '-c !a' });
     assert.strictEqual(r2[0].response, '$sender, command !a was removed');
   });
 
@@ -126,7 +126,7 @@ describe('Custom Commands - run()', () => {
     customcommands.run({ sender: owner, message: '!한글', parameters: '' });
     await message.isSentRaw('Lorem Ipsum', owner);
 
-    const r2 = await customcommands.remove({ sender: owner, parameters: '!한글' });
+    const r2 = await customcommands.remove({ sender: owner, parameters: '-c !한글' });
     assert.strictEqual(r2[0].response, '$sender, command !한글 was removed');
   });
 
@@ -137,7 +137,7 @@ describe('Custom Commands - run()', () => {
     customcommands.run({ sender: owner, message: '!русский', parameters: '' });
     await message.isSentRaw('Lorem Ipsum', owner);
 
-    const r2 = await customcommands.remove({ sender: owner, parameters: '!русский' });
+    const r2 = await customcommands.remove({ sender: owner, parameters: '-c !русский' });
     assert.strictEqual(r2[0].response, '$sender, command !русский was removed');
   });
 });

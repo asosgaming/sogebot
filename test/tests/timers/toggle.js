@@ -8,14 +8,14 @@ const message = require('../../general.js').message;
 const { linesParsed } = require('../../../dest/helpers/parser');
 
 // users
-const owner = { username: 'soge__' };
+const owner = { userName: '__broadcaster__' };
 
 const timers = (require('../../../dest/systems/timers')).default;
 
 const { getRepository } = require('typeorm');
 const { Timer, TimerResponse } = require('../../../dest/database/entity/timer');
 
-describe('Timers - toggle()', () => {
+describe('Timers - toggle() - @func2', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();

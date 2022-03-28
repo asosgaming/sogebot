@@ -1,14 +1,10 @@
 {
-  "new": "Nový Cooldown",
-  "empty": "Žádný cooldown nebyl vytvořen.",
-  "emptyAfterSearch": "Žádný cooldown nebyl nalezen pro tvé hledání <strong>\"$search\"</strong>.",
   "notify-as-whisper": "Oznámit šepotem",
-  "error": {
-    "isEmpty": "Tato hodnota nesmí být prázdná"
-  },
   "settings": {
     "enabled": "Status",
     "cooldownNotifyAsWhisper": "Oznámit informace o cooldown přes whisper",
-    "cooldownNotifyAsChat": "Oznámit informace o cooldown přes chat"
+    "cooldownNotifyAsChat": "Oznámit informace o cooldown přes chat",
+    "defaultCooldownOfCommandsInSeconds": "Výchozí nastavení pro příkazy (v sekundách)",
+    "defaultCooldownOfKeywordsInSeconds": "Výchozí nastavení pro klíčová slova (v sekundách)"
   }
 }

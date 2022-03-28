@@ -10,12 +10,12 @@ const timers = (require('../../../dest/systems/timers')).default;
 const { linesParsed } = require('../../../dest/helpers/parser');
 
 // users
-const owner = { username: 'soge__' };
+const owner = { userName: '__broadcaster__' };
 
 const { getRepository } = require('typeorm');
 const { Timer, TimerResponse } = require('../../../dest/database/entity/timer');
 
-describe('Timers - list()', () => {
+describe('Timers - list() - @func2', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();

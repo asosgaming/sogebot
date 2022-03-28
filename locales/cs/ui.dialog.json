@@ -55,9 +55,14 @@
     "edit": "Upravit",
     "delete": "Smazat",
     "play": "Přehrát",
+    "stop": "Zastavit",
     "hold-to-delete": "Podržte pro smazání",
     "yes": "Ano",
-    "no": "Ne"
+    "no": "Ne",
+    "permission": "Oprávnění",
+    "group": "Skupina",
+    "visibility": "Viditelnost",
+    "reset": "Reset"
   },
   "changesPending": "Vaše změny nebyly uloženy.",
   "formNotValid": "Opravte chyby ve formuláři.",

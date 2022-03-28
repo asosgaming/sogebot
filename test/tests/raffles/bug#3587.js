@@ -1,22 +1,21 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-/* global describe it before */
+/* global */
 
 require('../../general.js');
+const assert = require('assert');
 
+const { getRepository } = require('typeorm');
+
+const commons = require('../../../dest/commons');
+const { Raffle } = require('../../../dest/database/entity/raffle');
+const { User } = require('../../../dest/database/entity/user');
+const changelog = (require('../../../dest/helpers/user/changelog'));
+const raffles = (require('../../../dest/systems/raffles')).default;
 const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 const user = require('../../general.js').user;
-const commons = require('../../../dest/commons');
 
-const { getRepository } = require('typeorm');
-const { User } = require('../../../dest/database/entity/user');
-const { Raffle } = require('../../../dest/database/entity/raffle');
-
-const raffles = (require('../../../dest/systems/raffles')).default;
-
-const assert = require('assert');
-
-describe('Raffles - user will lose points when join raffle with number and all #3587', () => {
+describe('Raffles - user will lose points when join raffle with number and all #3587 - @func1', () => {
   before(async () => {
     await db.cleanup();
     await message.prepare();
@@ -26,20 +25,19 @@ describe('Raffles - user will lose points when join raffle with number and all #
 
   it('create ticket raffle', async () => {
     raffles.open({ sender: user.owner, parameters: '!winme -min 0 -max 100' });
-    await message.isSent('raffles.announce-ticket-raffle', { username: 'bot' }, {
-      keyword: '!winme',
-      eligibility: await commons.prepare('raffles.eligibility-everyone-item'),
-      min: 1,
-      max: 100,
-    });
+    await message.isSentRaw('Raffle is running (0 entries). To enter type "!winme <1-100>". Raffle is opened for everyone.', { userName: '__bot__' });
   });
 
   it('Update viewer and viewer2 to have 200 points', async () => {
-    await getRepository(User).save({ username: user.viewer.username, userId: user.viewer.userId, points: 200 });
-    await getRepository(User).save({ username: user.viewer2.username, userId: user.viewer2.userId, points: 200 });
+    await getRepository(User).save({
+      userName: user.viewer.userName, userId: user.viewer.userId, points: 200,
+    });
+    await getRepository(User).save({
+      userName: user.viewer2.userName, userId: user.viewer2.userId, points: 200,
+    });
   });
 
-  it('Viewer bets max points', async () => {
+  it('Viewer bets max allowed points', async () => {
     const a = await raffles.participate({ sender: user.viewer, message: '!winme 100' });
     assert(a);
   });
@@ -52,24 +50,27 @@ describe('Raffles - user will lose points when join raffle with number and all #
   it('expecting 2 participants to have bet of 100 and 50', async () => {
     const raffle = await getRepository(Raffle).findOne({
       relations: ['participants'],
-      where: { winner: null, isClosed: false },
+      where:     { winner: null, isClosed: false },
     });
     assert.strictEqual(raffle.participants.length, 2);
-    assert.strictEqual(raffle.participants[0].tickets, 100);
-    assert.strictEqual(raffle.participants[1].tickets, 50);
+    try {
+      assert.strictEqual(raffle.participants[0].tickets, 100);
+      assert.strictEqual(raffle.participants[1].tickets, 50);
+    } catch (e) {
+      assert.strictEqual(raffle.participants[0].tickets, 50);
+      assert.strictEqual(raffle.participants[1].tickets, 100);
+    }
   });
 
   it('expecting viewer to have 100 points', async () => {
-    const userFromDb = await getRepository(User).findOne({
-      where: { username: user.viewer.username },
-    });
+    await changelog.flush();
+    const userFromDb = await getRepository(User).findOne({ where: { userName: user.viewer.userName } });
     assert.strictEqual(userFromDb.points, 100);
   });
 
   it('expecting viewer2 to have 150 points', async () => {
-    const userFromDb = await getRepository(User).findOne({
-      where: { username: user.viewer2.username },
-    });
+    await changelog.flush();
+    const userFromDb = await getRepository(User).findOne({ where: { userName: user.viewer2.userName } });
     assert.strictEqual(userFromDb.points, 150);
   });
 
@@ -86,7 +87,7 @@ describe('Raffles - user will lose points when join raffle with number and all #
   it('expecting 2 participants to have bet of 100', async () => {
     const raffle = await getRepository(Raffle).findOne({
       relations: ['participants'],
-      where: { winner: null, isClosed: false },
+      where:     { winner: null, isClosed: false },
     });
     assert.strictEqual(raffle.participants.length, 2);
     assert.strictEqual(raffle.participants[0].tickets, 100);
@@ -94,16 +95,14 @@ describe('Raffles - user will lose points when join raffle with number and all #
   });
 
   it('expecting viewer to still have 100 points', async () => {
-    const userFromDb = await getRepository(User).findOne({
-      where: { username: user.viewer.username },
-    });
+    await changelog.flush();
+    const userFromDb = await getRepository(User).findOne({ where: { userName: user.viewer.userName } });
     assert.strictEqual(userFromDb.points, 100);
   });
 
   it('expecting viewer2 to have 100 points', async () => {
-    const userFromDb = await getRepository(User).findOne({
-      where: { username: user.viewer2.username },
-    });
+    await changelog.flush();
+    const userFromDb = await getRepository(User).findOne({ where: { userName: user.viewer2.userName } });
     assert.strictEqual(userFromDb.points, 100);
   });
 });

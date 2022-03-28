@@ -1,10 +1,13 @@
 {
   "settings": {
     "theme": "Výchozí motiv",
-    "domain": "Doména",
+    "domain": {
+      "title": "Doména",
+      "help": "Formát bez http/https: yourdomain.com nebo your.domain.com"
+    },
     "percentage": "Rozdíl v procentech u statistik",
     "shortennumbers": "Zkrácený formát čísel",
-    "stickystats": "Připnout statistiky nahoru",
-    "showdiff": "Zobraz rozdíly"
+    "showdiff": "Zobraz rozdíly",
+    "enablePublicPage": "Povolit veřejnou stránku"
   }
 }

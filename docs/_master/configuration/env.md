@@ -36,7 +36,7 @@ you **should not** enable this environment variable.
 - `HEAP=true`
 - `HEAP=false` *default*
 
-Heaps are saved in `./heap/main` and `./heap/cluster` folders
+Heaps are saved in `./heap/` folder
 
 ## LOGLEVEL
 
@@ -50,7 +50,7 @@ Changes log level of a bot
 Enables extended debugging, by default its disabled
 
 - `DEBUG=api.call` - will save `api.bot.csv` and `api.broadcaster.csv` files
-- `DEBUG=webhooks.stream`, `DEBUG=api.stream`
+- `DEBUG=api.stream`
 
 ## THREAD
 
@@ -62,6 +62,13 @@ Force worker_threads to be disabled in special cases (e.g. getChannelChattersUno
 ## TIMEZONE
 
 !> Timezone is affecting only bot logs and `!time` command
+
+## CORS
+
+Enable socket.io cors settings
+
+- `CORS=*`
+- nothing is set *default*
 
 ### What is this?
 

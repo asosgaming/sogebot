@@ -9,20 +9,20 @@ const assert = require('assert');
 
 const Parser = require('../../../dest/parser').default;
 
-const owner = { username: 'soge__', userId: Math.floor(Math.random() * 100000) };
+const owner = { userName: '__broadcaster__', userId: String(Math.floor(Math.random() * 100000)) };
 
 const { getRepository } = require('typeorm');
 const { User } = require('../../../dest/database/entity/user');
 
-describe('Parser - case sensitive commands', async () => {
+describe('Parser - case sensitive commands - @func2', async () => {
   const tests = [
     {
       test: '!me',
-      expected: '@soge__ | 0.0h | 0 points | 0 messages | 0.00€ | 0 bits',
+      expected: '@__broadcaster__ | 0 hours | 0 points | 0 messages | 0.00€ | 0 bits',
     },
     {
       test: '!ME',
-      expected: '@soge__ | 0.0h | 0 points | 0 messages | 0.00€ | 0 bits',
+      expected: '@__broadcaster__ | 0 hours | 0 points | 0 messages | 0.00€ | 0 bits',
     },
   ];
 
@@ -33,7 +33,7 @@ describe('Parser - case sensitive commands', async () => {
         await db.cleanup();
         await message.prepare();
 
-        await getRepository(User).save({ username: owner.username, userId: owner.userId });
+        await getRepository(User).save({ userName: owner.userName, userId: owner.userId });
       });
 
       it(`Run command '${test.test}'`, async () => {

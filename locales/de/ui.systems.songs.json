@@ -11,6 +11,7 @@
     "songrequest": "Von Song-Request wiedergeben",
     "playlist": "Von Wiedergabeliste wiedergeben",
     "onlyMusicCategory": "Nur Musik aus Kategorien zulassen",
+    "allowRequestsOnlyFromPlaylist": "Liedanfragen nur von der aktuellen Wiedergabeliste zulassen",
     "notify": "Nachricht bei Songwechsel senden"
   },
   "error": {
@@ -24,5 +25,9 @@
   "importing_done": "Importieren abgeschlossen",
   "seconds": "Sekunden",
   "calculated": "Berechnet",
-  "set_manually": "Manuell einstellen"
+  "set_manually": "Manuell einstellen",
+  "bannedSongsEmptyAfterSearch": "Ihre Suche nach <strong>\"$search\"</strong> hat keine gesperrten Titel gefunden.",
+  "emptyAfterSearch": "Ihre Suche nach <strong>\"$search\"</strong> hat keine Titel gefunden.",
+  "empty": "Es wurden noch keine Titel hinzugefügt.",
+  "bannedSongsEmpty": "Es wurden noch keine Titel zur Bannliste hinzugefügt."
 }

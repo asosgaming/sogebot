@@ -1,14 +1,13 @@
 {
   "settings": {
-    "generalChannel": "Канал",
     "generalOwners": "Владельцы",
     "botAccessToken": "AccessToken",
-    "broadcasterAccessToken": "AccessToken",
+    "channelAccessToken": "AccessToken",
     "botRefreshToken": "RefreshToken",
-    "broadcasterRefreshToken": "RefreshToken",
+    "channelRefreshToken": "RefreshToken",
     "botUsername": "Имя пользователя",
-    "broadcasterUsername": "Имя пользователя",
+    "channelUsername": "Имя пользователя",
     "botExpectedScopes": "Разрешения",
-    "broadcasterExpectedScopes": "Разрешения"
+    "channelExpectedScopes": "Разрешения"
   }
 }

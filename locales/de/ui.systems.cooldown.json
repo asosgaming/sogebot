@@ -1,14 +1,10 @@
 {
-  "new": "Neuer Cooldown",
-  "empty": "Bisher wurde noch kein Cooldown erstellt.",
-  "emptyAfterSearch": "Bei der Suche nach <strong>\"$search\"</strong> wurde kein Cooldown gefunden.",
   "notify-as-whisper": "Antwort über Privat Nachricht",
-  "error": {
-    "isEmpty": "Dieser Wert darf nicht leer sein"
-  },
   "settings": {
     "enabled": "Status",
     "cooldownNotifyAsWhisper": "Informationen zur Abklingzeit von Whisper-Nachrichten",
-    "cooldownNotifyAsChat": "Informationen zur Abklingzeit von Chat-Nachrichten"
+    "cooldownNotifyAsChat": "Informationen zur Abklingzeit von Chat-Nachrichten",
+    "defaultCooldownOfCommandsInSeconds": "Standard-Abklingzeit für Befehle (in Sekunden)",
+    "defaultCooldownOfKeywordsInSeconds": "Standard Abklingzeit für Keywords (in Sekunden)"
   }
 }

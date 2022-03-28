@@ -1,56 +1,72 @@
-const MockAdapter = require('axios-mock-adapter');
 const axios = require('axios');
+const MockAdapter = require('axios-mock-adapter');
+const { getRepository } = require('typeorm');
+const { v4 } = require('uuid');
+
+const { User } = require('../dest/database/entity/user');
+const users = require('./helpers/user');
+
+const getLatest100FollowersMockData = [];
+for (let i = 0; i < 100; i++) {
+  // we want to have each follower every minute
+  getLatest100FollowersMockData.push({
+    'userId':     String(Math.floor(Math.random() * 10000000)),
+    'userName':   v4(),
+    'followDate': null, // we are refreshing on each call
+  });
+}
+
+global.mockClient = (account) => {
+  return {
+    chat: {
+      getGlobalEmotes:  () => ([]),
+      getChannelEmotes: () => ([]),
+    },
+    users: {
+      getUserByName: async (userName) => {
+        console.log(`Mocking call users.getUserByName(${userName}) for ${account}`);
+        let id = String(Math.floor(Math.random() * 100000));
+
+        const user = await getRepository(User).findOne({ userName });
+        const mockUser = getLatest100FollowersMockData.find(o => o.userName === userName);
+        if (user) {
+          id = user.userId;
+        } else if (mockUser) {
+          id = mockUser.userId;
+        } else {
+          for (const key of Object.keys(users)) {
+            if (users[key].userName === userName) {
+              id = users[key].userId;
+            }
+          }
+        }
+        return {
+          id,
+          name:              userName,
+          displayName:       userName,
+          profilePictureUrl: '',
+        };
+      },
+      getFollows: () => {
+        console.log('Mocking call users.getFollows for ' + account);
+        // update follow time
+        for (let i = 0; i < 100; i++) {
+          getLatest100FollowersMockData[i].followDate = new Date(Date.now() - (i * 60000));
+        }
+        return {
+          data: getLatest100FollowersMockData,
+        };
+      },
+    },
+    clips: {
+      getClipById: () => {
+        console.log('Mocking call clips.getClipById for ' + account);
+      },
+    },
+  };
+};
 
 global.mock = new MockAdapter(axios);
 global.mock
-  .onGet('http://localhost/get?test=a\\nb').reply(200, {
-    test: 'a\\nb',
-  })
-  .onGet('https://api.twitch.tv/helix/users/follows?to_id=12345&first=100').reply(200, {
-    'total': 12345,
-    'data': [
-      {
-        'from_id': '171003792',
-        'from_name': 'IIIsutha067III',
-        'to_id': '23161357',
-        'to_name': 'LIRIK',
-        'followed_at': '2017-08-22T22:55:24Z',
-      },
-      {
-        'from_id': '113627897',
-        'from_name': 'Birdman616',
-        'to_id': '23161357',
-        'to_name': 'LIRIK',
-        'followed_at': '2017-08-22T22:55:04Z',
-      },
-      {
-        'from_id': '111',
-        'from_name': 'testfollow',
-        'to_id': '23161357',
-        'to_name': 'LIRIK',
-        'followed_at': String(new Date()),
-      },
-      {
-        'from_id': '222',
-        'from_name': 'testfollow2',
-        'to_id': '23161357',
-        'to_name': 'LIRIK',
-        'followed_at': String(new Date()),
-      },
-      {
-        'from_id': '333',
-        'from_name': '__bot_username__',
-        'to_id': '23161357',
-        'to_name': 'LIRIK',
-        'followed_at': String(new Date()),
-      },
-    ],
-    'pagination': {
-      'cursor': 'eyJiIjpudWxsLCJhIjoiMTUwMzQ0MTc3NjQyNDQyMjAwMCJ9',
-    },
-  }, {
-    'ratelimit-remaining': 800,
-    'ratelimit-reset': 0,
-    'ratelimit-limit': 800,
-  })
+  .onGet('http://localhost/get?test=a\\nb').reply(200, { test: 'a\\nb' })
   .onAny().passThrough(); // pass through others

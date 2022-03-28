@@ -14,7 +14,7 @@ const { Quotes } = require('../../../dest/database/entity/quotes');
 const quotes = (require('../../../dest/systems/quotes')).default;
 
 // users
-const owner = { username: 'soge__', userId: 1 };
+const owner = { userName: '__broadcaster__', userId: 1 };
 
 const tests = [
   { sender: owner, parameters: '', shouldFail: true },
@@ -28,7 +28,7 @@ const tests = [
   { sender: owner, parameters: '-tag ipsum, dolor -id 99999', id: 99999, tags: 'ipsum, dolor', shouldFail: false, exist: false },
 ];
 
-describe('Quotes - set()', () => {
+describe('Quotes - set() - @func3', () => {
   for (const test of tests) {
     describe(test.parameters, async () => {
       before(async () => {

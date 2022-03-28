@@ -1,34 +1,31 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-/* global describe it */
 require('../../general.js');
 
-const db = require('../../general.js').db;
-const message = require('../../general.js').message;
 const assert = require('assert');
 
-const { getLocalizedName } = require('../../../dest/commons');
-
 const { getRepository } = require('typeorm');
-const { User } = require('../../../dest/database/entity/user');
 
+const { User } = require('../../../dest/database/entity/user');
 const ranks = (require('../../../dest/systems/ranks')).default;
+const db = require('../../general.js').db;
+const message = require('../../general.js').message;
 
 // users
-const owner = { userId: Math.floor(Math.random() * 100000), username: 'soge__' };
+const owner = { userId: String(Math.floor(Math.random() * 100000)), userName: '__broadcaster__' };
 
 const vwrranks = [
-  { hours: 0, rank: 'Zero'},
-  { hours: 2, rank: 'Two'},
-  { hours: 4, rank: 'Four'},
-  { hours: 6, rank: 'Six'},
-  { hours: 8, rank: 'Eight'},
+  { hours: 0, rank: 'Zero' },
+  { hours: 2, rank: 'Two' },
+  { hours: 4, rank: 'Four' },
+  { hours: 6, rank: 'Six' },
+  { hours: 8, rank: 'Eight' },
 ];
 
 const flwranks = [
-  { months: 8, rank: 'Eight Follower'},
+  { months: 8, rank: 'Eight Follower' },
 ];
 
-describe('Ranks - followers', () => {
+describe('Ranks - followers - @func2', () => {
   before(async () => {
     await db.cleanup();
     await message.prepare();
@@ -56,11 +53,13 @@ describe('Ranks - followers', () => {
   ];
   for (const [id, v] of Object.entries(users)) {
     it('Add user ' + v + ' to db', async () => {
-      await getRepository(User).save({ username: v , userId: Number('100' + id), isFollower: true, followedAt: new Date((new Date()).setMonth((new Date()).getMonth()-(id * 5))).getTime(), watchedTime: id * 1000 * 60 * 60 });
+      await getRepository(User).save({
+        userName: v , userId: String('100' + id), isFollower: true, followedAt: new Date((new Date()).setMonth((new Date()).getMonth()-(id * 5))).toISOString(), watchedTime: id * 1000 * 60 * 60,
+      });
     });
 
     it('Rank of user should be correct', async () => {
-      const r = await ranks.main({ sender: { userId: Number('100' + id), username: v }});
+      const r = await ranks.main({ sender: { userId: String('100' + id), userName: v } });
       assert.strictEqual(r[0].response, expectedMessage[id]);
     });
   }

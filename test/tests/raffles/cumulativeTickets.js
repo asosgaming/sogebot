@@ -16,7 +16,7 @@ const raffles = (require('../../../dest/systems/raffles')).default;
 
 const assert = require('assert');
 
-describe('Raffles - cumulativeTickets', () => {
+describe('Raffles - cumulativeTickets - @func1', () => {
   before(async () => {
     await db.cleanup();
     await message.prepare();
@@ -26,16 +26,11 @@ describe('Raffles - cumulativeTickets', () => {
 
   it('create ticket raffle', async () => {
     raffles.open({ sender: user.owner, parameters: '!winme -min 0 -max 500' });
-    await message.isSent('raffles.announce-ticket-raffle', { username: 'bot' }, {
-      keyword: '!winme',
-      eligibility: await commons.prepare('raffles.eligibility-everyone-item'),
-      min: 1,
-      max: 500,
-    });
+    await message.isSentRaw('Raffle is running (0 entries). To enter type "!winme <1-500>". Raffle is opened for everyone.', { userName: '__bot__' });
   });
 
   it('Update viewer to have 25 points', async () => {
-    await getRepository(User).save({ username: user.viewer.username, userId: user.viewer.userId, points: 25 });
+    await getRepository(User).save({ userName: user.viewer.userName, userId: user.viewer.userId, points: 25 });
   });
 
   it('Viewer bets 10 points', async () => {

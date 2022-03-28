@@ -9,9 +9,9 @@ const assert = require('assert');
 const customcommands = (require('../../../dest/systems/customcommands')).default;
 
 // users
-const owner = { username: 'soge__' };
+const owner = { userName: '__broadcaster__' };
 
-describe('Custom Commands - list()', () => {
+describe('Custom Commands - @func1 - list()', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();

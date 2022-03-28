@@ -4,6 +4,9 @@
 * Configuration
   * [Database](/configuration/database.md)
   * [Environment variables](/configuration/env.md)
+* Services
+  * [Twitch](/services/twitch.md)
+  * [Google](/services/google.md)
 * Systems
   * [Alias](/systems/alias.md)
   * [Commercial](/systems/commercial.md)
@@ -11,6 +14,7 @@
   * [Custom Commands](/systems/custom-commands.md)
   * [Cooldowns](/systems/cooldowns.md)
   * [Keywords](/systems/keywords.md)
+  * [Levels](/systems/levels.md)
   * [Moderation](/systems/moderation.md)
   * [Timers](/systems/timers.md)
   * [Points](/systems/points.md)
@@ -44,10 +48,10 @@
 * How To
   * [Connection to socket](/howto/connection-to-socket.md)
   * [Phillips Hue](/howto/phillipshue.md)
-  * [Run bot in cluster](/howto/run-bot-in-cluster.md)
   * [Eval snippets](/howto/eval.md)
   * [Run random command](/howto/run-random-command.md)
   * [Write own system](/howto/write-own-system.md)
 * Integrations
   * [Twitter](/integrations/twitter.md)
+  * [Last.fm](/integrations/lastfm.md)
   * [Spotify](/integrations/spotify.md)

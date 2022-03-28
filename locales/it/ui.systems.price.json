@@ -1,0 +1,14 @@
+{
+  "emitRedeemEvent": "Emette l'evento di riscattamento se i bit sono usati",
+  "price": {
+    "name": "prezzo",
+    "placeholder": ""
+  },
+  "error": {
+    "isEmpty": "Questo valore non può essere vuoto"
+  },
+  "warning": "Questa azione non può essere annullata!",
+  "settings": {
+    "enabled": "Status"
+  }
+}

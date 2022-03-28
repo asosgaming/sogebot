@@ -5,6 +5,7 @@
     "disabled": "vypnuto",
     "usage": "Použití",
     "lang-selected": "Jazyk bota je nyní nastaven na češtinu",
+    "refresh-panel": "Budete muset aktualizovat uživatelské rozhraní, abyste mohli vidět změny.",
     "command-parse": "Omlouváme se, $sender, ale tento příkaz není správný, použijte",
     "error": "Omlouváme se, $sender, ale něco se pokazilo!",
     "no-response": "",
@@ -26,11 +27,16 @@
     "hours": "hodina|4:hodiny|hodin",
     "minutes": "minuta|4:minuty|minut",
     "seconds": "sekunda|4:sekundy|sekund",
-    "messages": "zprava|4:zprávy|zpráv",
+    "messages": "zpráva|4:zprávy|zpráv",
     "bits": "bit|4:bity|bitů",
     "links": "odkaz|4:odkazy|odkazů",
+    "entries": "vstup|4:vstupy|vstupů",
     "empty": "prázdné",
     "isRegistered": "$sender, nemůžeš použít $keyword, protože je již používán pro jinou akci!"
+  },
+  "clip": {
+    "notCreated": "Něco se pokazilo a klip nebyl vytvořen.",
+    "offline": "Stream je momentálně offline a klip nelze vytvořit."
   },
   "uptime": {
     "online": "Stream je online (if $days>0|$daysd )(if $hours>0|$hoursh )(if $minutes>0|$minutesm )(if $seconds>0|$secondss)",
@@ -38,26 +44,24 @@
   },
   "webpanel": {
     "this-system-is-disabled": "Tento systém je vypnutý",
+    "or": "nebo",
     "loading": "Načítám",
     "this-may-take-a-while": "Může to <strong>chvíli</strong> trvat",
     "display-as": "Zobrazit jako",
+    "go-to-admin": "Přejít na Admina",
+    "go-to-public": "Přejít na Veřejné",
+    "logout": "Odhlásit",
+    "popout": "Popout",
+    "not-logged-in": "Nejste přihlášen",
+    "remove-widget": "Odstranit <strong>$name</strong> widget",
+    "join-channel": "Připojit bota na kanál",
+    "leave-channel": "Opustit kanál",
     "set-default": "Nastavit výchozí",
     "add": "Přidat",
     "placeholders": {
       "text-url-generator": "Vložte text nebo HTML pro vytvoření base64 níže a URL výše",
       "text-decode-base64": "Vložte base64 a vygenerujte URL a text výše",
       "creditsSpeed": "Nastavte rychlost titulek, nižší = rychlejší"
-    },
-    "custom-variables": {
-      "set-your-variables-to-watch-here": "Zde nastavte proměnné",
-      "type": "typ",
-      "unwatch": "Přestat sledovat",
-      "watch": "Sledovat",
-      "options": "možnosti",
-      "number": "číslo",
-      "text": "text",
-      "options-placeholder": "možnost1, možnost2, možnost3, zde je možnost 4",
-      "no-options-set": "Zatím jste nenastavili své možnosti"
     },
     "timers": {
       "title": "Časovače",
@@ -76,6 +80,7 @@
       "dialog": {
         "timer": "Časovač",
         "name": "Název",
+        "tickOffline": "Bude odpočítávat i při vypnutém streamu",
         "interval": "Interval",
         "responses": "Odpovědi",
         "messages": "Každých x zpráv",
@@ -111,8 +116,9 @@
     "events": {
       "event": "Událost",
       "noEvents": "Žádné události nebyly nalezeny v databázi.",
-      "noEventsAfterSearch": "Žádné události pro toto hledání nebyly nalezeny v databázi.",
       "whatsthis": "co je to?",
+      "myRewardIsNotListed": "Moje odměna není zobrazena!",
+      "redeemAndClickRefreshToSeeReward": "Pokud Vám chybí vytvořená odměna v seznamu obnovte seznam kliknutím na ikonu obnovení.",
       "badges": {
         "enabled": "Zapnuto",
         "disabled": "Vypnuto"
@@ -157,6 +163,16 @@
         "operations": "Operace"
       },
       "definitions": {
+        "taskId": {
+          "label": "ID úkolu"
+        },
+        "filter": {
+          "label": "Filtr"
+        },
+        "linkFilter": {
+          "label": "Odkaz nebo ID overlaye",
+          "placeholder": "Pokud používáte overlay, přidejte odkaz nebo ID"
+        },
         "hashtag": {
           "label": "Hashtag nebo klíčové slovo",
           "placeholder": "#yourHashtagHere nebo klíčovéSlovo"
@@ -198,11 +214,6 @@
           "label": "Nejméně diváků",
           "placeholder": "Kolik diváků spustí událost"
         },
-        "ignoreAutohost": {
-          "label": "Ignorovat Autohost",
-          "true": "Ignorovat",
-          "false": "Neignorovat"
-        },
         "runInterval": {
           "label": "Interval spuštění (0 = spustit jednou za stream)",
           "placeholder": "Spustit událost každých x sekund"
@@ -219,14 +230,16 @@
           "label": "Poslat zprávu",
           "placeholder": "Nastav svou zprávu"
         },
+        "channel": {
+          "label": "Kanál",
+          "placeholder": "Název kanálu nebo ID"
+        },
         "commandToRun": {
           "label": "Příkaz ke spuštění",
           "placeholder": "Nastav si !prikazKeSpusteni"
         },
         "isCommandQuiet": {
-          "label": "Měl by být příkaz potichu",
-          "true": "Příkaz bude potichu",
-          "false": "Příkaz nebude potichu"
+          "label": "Neposílat odpověď příkazu do chatu"
         },
         "urlOfSoundFile": {
           "label": "Adresa URL vašeho zvukového souboru",
@@ -239,6 +252,11 @@
         "emotesToFirework": {
           "label": "Emotes k ohňostroji",
           "placeholder": "Seznam emotes k ohňostroji, např. Kappa PurpleHeart"
+        },
+        "replay": {
+          "label": "Přehrát klip v overlayi",
+          "true": "Přehraje záznam v overlay/alerts",
+          "false": "Záznam se nepřehraje"
         },
         "announce": {
           "label": "Oznámit v chatu",
@@ -262,33 +280,70 @@
           "label": "Kolik přičíst",
           "placeholder": ""
         },
+        "value": {
+          "label": "Hodnota",
+          "placeholder": ""
+        },
         "numberToDecrement": {
           "label": "Kolik odečíst",
+          "placeholder": ""
+        },
+        "": "",
+        "titleOfReward": {
+          "label": "Název vyplacené odměny",
           "placeholder": ""
         }
       }
     },
     "eventlist-events": {
       "follow": "ti dal <strong>follow</strong>",
-      "host": "tě <strong>hostuje</strong> s $viewers diváky",
-      "raid": "tě <strong>raiduje</strong> s $viewers diváky",
-      "sub": "ti dal <strong>sub</strong> | $tier",
-      "subgift": "byl <strong>darován</strong> sub od $username",
-      "subcommunitygift": "<strong>daroval</strong> suby pro $count diváků",
-      "resub": "ti dal <strong>resub</strong> $subStreak $subStreakName | $tier | celkově $subCumulativeMonths $subCumulativeMonthsName",
-      "resubWithoutStreak": "ti dal <strong>resub</strong> | $tier | celkově $subCumulativeMonths $subCumulativeMonthsName",
-      "cheer": "ti dal <strong>cheer</strong> $bits bitů",
-      "tip": "ti dal <strong>tip</strong> $formatted_amount"
+      "host": "<strong>hostitel</strong>",
+      "raid": "<strong>nájezd</strong>",
+      "sub": "<strong>předplatitel</strong>",
+      "subgift": "<strong>darované</strong> předplatné",
+      "subcommunitygift": "<strong>darované</strong> předplatné komunitě",
+      "resub": "<strong>předplatitel</strong>",
+      "cheer": "<strong>bity</strong>",
+      "tip": "<strong>spropitné</strong>",
+      "rewardredeem": "žádost o <strong>odměnu</strong>"
     },
     "responses": {
       "variable": {
+        "titleOfPrediction": "Twitch Predikce - Název",
+        "outcomes": "Twitch Predikce - Výsledky",
+        "locksAt": "Twitch predikce - Uzamknutí k datu",
+        "winningOutcomeTitle": "Twitch Predikce - Název vítězného výsledku",
+        "winningOutcomeTotalPoints": "Twitch Predikce - Celkový počet bodů vítězného výsledku",
+        "winningOutcomePercentage": "Twitch Predikce - Procentuální podíl vítězného výsledku",
+        "titleOfPoll": "Twitch anketa - název",
+        "bitAmountPerVote": "Twitch anketa - množství bitů, které se mají počítat jako 1 hlas",
+        "bitVotingEnabled": "Twitch anketa - je hlasování pomocí bitů povoleno (boolean)",
+        "channelPointsAmountPerVote": "Twitch anketa - Počet kanálových bodů, které se mají počítat jako 1 hlas",
+        "channelPointsVotingEnabled": "Twitch anketa - je hlasování pomocí kanálových bodů povoleno (boolean)",
+        "votes": "Twitch anketa - počet hlasů",
+        "winnerChoice": "Twitch anketa - vítězná volba",
+        "winnerPercentage": "Twitch anketa - procento vítězné volby",
+        "winnerVotes": "Twitch anketa - počet hlasů vítězné volby",
+        "goal": "Cíl",
+        "total": "Celkem",
+        "lastContributionTotal": "Poslední příspěvek - Celkem",
+        "lastContributionType": "Poslední příspěvek - Typ",
+        "lastContributionUserId": "Poslední příspěvek - ID uživatele",
+        "lastContributionUsername": "Poslední příspěvek - Uživatelské jméno",
+        "level": "Úroveň",
+        "topContributionsBitsTotal": "Nejlepší příspěvek v Bitech - Celkem",
+        "topContributionsBitsUserId": "Nejlepší příspěvek v Bitech - ID uživatele",
+        "topContributionsBitsUsername": "Nejlepší příspěvek v Bitech - Uživatelské jméno",
+        "topContributionsSubsTotal": "Nejlepší příspěvek v Subech - Celkem",
+        "topContributionsSubsUserId": "Nejlepší příspěvek v Subech - ID uživatele",
+        "topContributionsSubsUsername": "Nejlepší příspěvek v Subech - Uživatelské jméno",
         "sender": "Uživatel, který inicioval",
         "title": "Aktuální název",
         "game": "Aktuální hra",
         "language": "Aktuální jazyk vysílání",
         "viewers": "Aktuální počet diváků",
+        "hostViewers": "Počet diváků z hostováni/nájezdu",
         "views": "Aktuální počet zobrazení",
-        "hosts": "Aktuální počet hostů",
         "followers": "Aktuální počet followerů",
         "subscribers": "Aktuální počet subscriberů",
         "arg": "Parametr",
@@ -303,7 +358,6 @@
         "type": "Typ",
         "days": "Dny",
         "hours": "Hodiny",
-        "minutesName": "Skloňování slova minuta (1 minuta, 2 minuty)",
         "minutes": "Minuty",
         "seconds": "Sekundy",
         "description": "Popisek",
@@ -356,7 +410,6 @@
         "message": "Zpráva",
         "reason": "Důvod",
         "target": "Cíl",
-        "autohost": "Autohost (true/false)",
         "duration": "Doba trvání",
         "method": "Metoda",
         "tier": "Tier",
@@ -369,6 +422,8 @@
         "spotifySong": "Aktuální skladba na Spotify",
         "latestFollower": "Poslední Follower",
         "latestSubscriber": "Poslední Subscriber",
+        "latestSubscriberMonths": "Poslední Subscriber - souhrnné měsíce",
+        "latestSubscriberStreak": "Poslední Subscriber - série měsíců předplatného",
         "latestTipAmount": "Poslední Tip (počet)",
         "latestTipCurrency": "Poslední Tip (měna)",
         "latestTipMessage": "Poslední Tip (zpráva)",
@@ -387,15 +442,21 @@
             "message": "Top Tip - během vysílání (zpráva)"
           }
         },
-        "latestCheerAmount": "Poslední Cheer (počet)",
-        "latestCheerMessage": "Poslední Cheer (zpráva)",
-        "latestCheer": "Poslední Cheer (uživatel)",
+        "latestCheerAmount": "Poslední Bity (počet)",
+        "latestCheerMessage": "Poslední Bity (zpráva)",
+        "latestCheer": "Poslední Bity (uživatel)",
         "version": "Verze bota",
         "haveParam": "Příkaz má parametr? (bool)",
+        "source": "Aktuální zdroj (twitch nebo discord)",
+        "userInput": "Vstup uživatele během odměny",
+        "isBotSubscriber": "Je bot předplatitelem (bool)",
+        "isStreamOnline": "Je stream online (bool)",
+        "uptime": "Délka vysílaní streamu",
         "is": {
           "moderator": "Je uživatel mod? (bool)",
           "subscriber": "Je uživatel sub? (bool)",
           "vip": "Je uživatel vip? (bool)",
+          "newchatter": "Je to první zpráva uživatele? (bool)",
           "follower": "Je uživatel follower? (bool)",
           "broadcaster": "Je uživatel broadcaster? (bool)",
           "bot": "Je uživatel bot? (bool)",
@@ -415,7 +476,8 @@
           "username": "Uživatelské jméno na Twitteru",
           "displayname": "Zobrazené jméno na Twitteru",
           "url": "Link na tweet"
-        }
+        },
+        "sceneName": "Název scény"
       }
     },
     "page-settings": {
@@ -441,10 +503,9 @@
         "messages": "Zprávy",
         "follows": "Followy",
         "subs": "Odběratelé",
-        "cheers": "Cheery",
+        "cheers": "Bity",
         "responses": "Odpovědi bota",
         "whispers": "Šeptání",
-        "hosts": "Hostování",
         "bans": "Bany",
         "timeouts": "Timeouty"
       },
@@ -495,7 +556,7 @@
     "overlays-eventlist-host": "host",
     "overlays-eventlist-sub": "sub",
     "overlays-eventlist-follow": "follow",
-    "overlays-eventlist-cheer": "bits",
+    "overlays-eventlist-cheer": "bity",
     "overlays-eventlist-tip": "tip",
     "overlays-eventlist-raid": "raid",
     "requested-by": "Požadoval",
@@ -552,14 +613,12 @@
     "rank": "Hodnost",
     "previous": "Předchozí",
     "next": "Další",
-    "or": "nebo",
     "close": "Zavřít",
     "save-changes": "Uložit změny",
     "saving": "Ukládám...",
     "deleting": "Mazání...",
     "done": "Hotovo",
     "error": "Chyba",
-    "custom-title-empty-error": "Vlastní nadpis je zaškrtnut, ale pole je prázdné!",
     "title": "Název",
     "change-title": "Změnit název",
     "game": "hra",
@@ -573,7 +632,6 @@
     "new-chatters": "Nových diváků",
     "chat-messages": "Zpráv v chatu",
     "views": "Shlédnutí",
-    "hosts": "Hostování",
     "followers": "Followeři",
     "subscribers": "Subscribeři",
     "bits": "Bity",
@@ -585,15 +643,8 @@
     "status": "Status",
     "add-widget": "Přidat widget",
     "remove-dashboard": "Odstranit nástěnku",
-    "remove-widget": "Smazat widget",
-    "for": "pro",
     "close-bet-after": "Uzavřít sázku za",
-    "gain-every-option": "Zisk s každou položkou",
-    "reuse-bet": "opětovně použij",
     "refund": "refundovat",
-    "open-queue": "Otevřít frontu",
-    "close-queue": "Zavřít frontu",
-    "number-of-users": "Počet diváků",
     "roll-again": "Losuj znovu",
     "no-eligible-participants": "Žádní další oprávnění účastníci",
     "follower": "Sledující",
@@ -602,14 +653,12 @@
     "seconds": "vteřiny",
     "hours": "hodiny",
     "months": "měsíce",
-    "eligible-to-enter": "Oprávněni se zúčastnit:",
-    "followers-only": "Pouze followeři",
-    "subscribers-only": "Pouze subscribeři",
+    "eligible-to-enter": "Oprávněni se zúčastnit",
     "everyone": "Všichni",
     "roll-a-winner": "Losovat vítěze",
     "send-message": "Poslat zprávu",
     "messages": "Zprávy",
-    "announce-every": "Oznámit každých",
+    "level": "Úroveň",
     "create": "Vytvořit",
     "cooldown": "Cooldown",
     "confirm": "Potvrdit",
@@ -619,18 +668,13 @@
     "enable": "Zapnout",
     "disable": "Vypnout",
     "slug": "Slug",
-    "stream-title": "Název vysílání",
     "posted-by": "Vložil",
     "time": "Čas",
     "type": "Typ",
     "response": "Odpověď",
-    "num-of-responses": "# Odpovědí",
     "cost": "Cena",
     "name": "Název",
     "playlist": "Seznam skladeb",
-    "public-link": "Veřejný odkaz",
-    "banned-songs": "Zabanované písničky",
-    "youtube-id": "YouTube ID",
     "length": "Doba trvání",
     "volume": "Hlasitost",
     "start-time": "Čas zahájení",
@@ -649,75 +693,27 @@
     "date": "Data",
     "points": "Body",
     "calendar": "Kalendář",
-    "stream-events": "Události vysílání",
-    "select-date-from-calendar": "Vyber datum z kalendáře",
-    "select-stream-from-calendar-and-events": "Vyber vysílání z kalendáře a eventů",
-    "there-is-no-events-on-selected-date": "Ve zvoleném datu nejsou žádné události",
     "string": "string",
-    "points-name": "Název bodů",
-    "points-single-multi": "j.č.|mn.č.",
-    "points-response": "Odpověď pro body",
-    "points-interval": "Interval bodů",
-    "points-per-interval": "Bodů za interval",
-    "points-interval-offline": "Interval bodů (offline)",
-    "points-per-interval-offline": "Bodů za interval (offline)",
-    "points-per-message": "Bodů za zprávu",
-    "points-per-message-interval": "Přičíst body každých X zpráv",
     "interval": "Interval",
     "number": "číslo",
     "minimal-messages-required": "Minimální počet zpráv",
     "max-duration": "Maximální délka",
     "shuffle": "Hrát náhodně",
-    "song-requests": "Požadavky na skladbu",
     "song-request": "Požadavek na skladbu",
-    "song-notify": "Oznámení při zahájení skladby",
     "format": "Formát",
     "available": "Dostupné",
-    "links": "Linky",
-    "symbols": "Symboly",
-    "long-messages": "Dlouhé zprávy",
-    "capitals": "Velké písmena",
-    "spam": "Spam",
-    "colors": "Barvy",
-    "emotes": "Smajlíky",
     "one-record-per-line": "jeden záznam na řádek",
     "on": "zapnuto",
     "off": "vypnuto",
     "search-by-username": "Hledat podle uživatelského jména",
-    "create-and-use-a-new-game": "Vytvoř a použij novou hru",
-    "create-and-use-a-new-title": "Vytvoř a použij nový název",
-    "search-tags": "Vyhledat dostupné tagy (některé herní tagy mohou být nedostupné)",
-    "followers-show-number": "Zobrazit",
-    "followers-show": "followerů",
-    "eventlist-overflow-height": "Maximální výška widgetu",
-    "eventlist-show-number": "Zobrazit",
-    "eventlist-show": "eventů",
-    "subscribers-show": "subscriberů",
-    "followers-size": "Velikost fontu",
-    "followers-message-size": "Velikost fontu zpráv",
-    "custom-message": "Vlastní zpráva",
-    "custom-ban-message": "Vlastní ban zpráva",
-    "custom-ban-message-warning": "Vlastní varování",
-    "minimal-watched-time": "Minimální čas sledování:",
-    "widget-title-customvariables": "VLASTNÍ PROMĚNNÉ",
-    "widget-title-randomizer": "NÁHODNÝ VÝBĚR",
+    "widget-title-custom": "VLASTNÍ",
     "widget-title-eventlist": "KANÁL AKTIVIT",
-    "widget-title-bets": "SÁZKY",
     "widget-title-chat": "CHAT",
-    "widget-title-clips": "POSLEDNÍ KLIPY",
     "widget-title-queue": "FRONTA",
     "widget-title-raffles": "TOMBOLA",
-    "widget-title-soundboard": "SOUNDBOARD",
-    "widget-title-cmdboard": "COMMANDBOARD",
-    "widget-title-twitch": "TWITCH STREAM MONITOR",
-    "widget-title-ytplayer": "PŘEHRÁVAČ HUDBY",
-    "widget-title-latest-followers": "NEJNOVĚJŠÍ FOLLOWEŘI",
-    "widget-title-latest-subscribers": "NEJNOVĚJŠÍ SUBSCRIBEŘI",
-    "widget-title-commercial": "REKLAMY",
-    "widget-title-spotify": "SPOTIFY",
-    "widget-title-join": "JOIN LIST",
-    "widget-title-part": "PART LIST",
     "widget-title-social": "SOCIAL",
+    "widget-title-ytplayer": "PŘEHRÁVAČ HUDBY",
+    "widget-title-monitor": "MONITOR",
     "event": "událost",
     "operation": "operace",
     "tweet-post-with-hashtag": "Tweet zveřejněn s hashtagem",
@@ -725,7 +721,16 @@
     "user-parted-channel": "uživatel se odešel z chatu",
     "follow": "nový follower",
     "tip": "nový tip",
+    "obs-scene-changed": "OBS scéna se změnila",
     "unfollow": "ztráta followera",
+    "hypetrain-started": "Hype Train spuštěn",
+    "hypetrain-ended": "Konec Hype Train",
+    "prediction-started": "Twitch predikce byla spuštěna",
+    "prediction-locked": "Twitch predikce byla uzamčena",
+    "prediction-ended": "Twitch predikce byla ukončena",
+    "poll-started": "Twitch anketa spuštěna",
+    "poll-ended": "Twitch anketa ukončena",
+    "hypetrain-level-reached": "Dosažení nové úrovně Hype Train",
     "subscription": "nový subscription",
     "subgift": "nový subgift",
     "subcommunitygift": "nový sub darovaný komunitě",
@@ -734,11 +739,13 @@
     "keyword-send-x-times": "klíčové slovo posláno x-krát",
     "number-of-viewers-is-at-least-x": "počet diváků je alespoň x",
     "stream-started": "vysílání zahájeno",
+    "reward-redeemed": "odměna vyplacena",
     "stream-stopped": "vysílání zastaveno",
     "stream-is-running-x-minutes": "vysílání běží x minut",
+    "chatter-first-message": "první zpráva chattera",
     "every-x-minutes-of-stream": "každých x minut vysílání",
     "game-changed": "hra změněna",
-    "cheer": "cheer byl získán",
+    "cheer": "přijaté bity",
     "clearchat": "chat byl vymazán",
     "action": "uživatel poslal /me",
     "ban": "uživatel byl zabanován",
@@ -749,11 +756,12 @@
     "timeout": "uživatel dostal timeout",
     "create-a-new-event-listener": "Vytvoř nový event listener",
     "send-twitter-message": "poslat zprávu na twitter",
-    "send-chat-message": "poslat chat zprávu",
+    "send-discord-message": "odeslat Discord zprávu",
+    "send-chat-message": "odeslat zprávu na twitch chat",
     "send-whisper": "poslat whisper",
     "run-command": "spusť příkaz",
+    "run-obswebsocket-command": "spustit příkaz OBS Websocketu",
     "do-nothing": "--- nedělat nic ---",
-    "play-sound": "přehrát zvuk",
     "count": "počet",
     "timestamp": "časové razítko",
     "message": "zpráva",
@@ -780,8 +788,8 @@
     "bot-will-join-channel": "bot se připojí k kanálu",
     "bot-will-leave-channel": "bot opustí kanál",
     "create-a-clip": "vytvořit klip",
-    "create-a-clip-and-play-replay": "vytvořit klip a přehrát (overlay/alerts)",
     "increment-custom-variable": "přičíst do vlastní proměnné",
+    "set-custom-variable": "nastavit vlastní proměnnou",
     "decrement-custom-variable": "odečíst z vlastní proměnné",
     "omit": "vynechat",
     "comply": "dodržovat",
@@ -797,8 +805,16 @@
     "eligibility-followers-item": "followery",
     "eligibility-subscribers-item": "subscribery",
     "eligibility-everyone-item": "všechny",
-    "announce-raffle": "Tombola běží. Pro vstup napište $keyword. Tombola je otevřena pro $eligibility",
-    "announce-ticket-raffle": "Tombola běží. Pro vstup napište $keyword <$min-$max>. Tombola je otevřena pro $eligibility",
+    "raffle-is-running": "Tombola právě probíhá ($count $l10n_entries).",
+    "to-enter-raffle": "Pro účast napište \"$keyword\". Tombola je otevřena pro $eligibility.",
+    "to-enter-ticket-raffle": "Pro účast napište \"$keyword <$min-$max>\". Tombola je otevřena pro $eligibility.",
+    "added-entries": "Do tomboly bylo přidáno $count $l10n_entries (celkově $countTotal). {raffles.to-enter-raffle}",
+    "added-ticket-entries": "Do tomboly bylo přidáno $count $l10n_entries (celkově $countTotal). {raffles.to-enter-ticket-raffle}",
+    "join-messages-will-be-deleted": "Příkazy pro vstup do tomboly budou odstraněny.",
+    "announce-raffle": "{raffles.raffle-is-running} {raffles.to-enter-raffle}",
+    "announce-ticket-raffle": "{raffles.raffle-is-running} {raffles.to-enter-ticket-raffle}",
+    "announce-new-entries": "{raffles.added-entries} {raffles.to-enter-raffle}",
+    "announce-new-ticket-entries": "{raffles.added-entries} {raffles.to-enter-ticket-raffle}",
     "cannot-create-raffle-without-keyword": "Omlouváme se, $sender, ale bez klíčového slova nelze vytvořit tombolu",
     "raffle-is-already-running": "Omlouváme se, $sender, tombola již běží s klíčovým slovem $keyword",
     "no-raffle-is-currently-running": "$sender, žádná tombola bez vítězů není v současné době spuštěna",
@@ -841,10 +857,12 @@
     "alias-group-set": "$sender, alias $alias byl nastaven na skupinu $group",
     "alias-group-unset": "$sender, skupina aliasu $alias byla zrušena",
     "alias-group-list": "$sender, seznam skupin aliasů: $list",
-    "alias-group-list-aliases": "$sender, seznam aliasů v $group: $list"
+    "alias-group-list-aliases": "$sender, seznam aliasů v $group: $list",
+    "alias-group-list-enabled": "$sender, aliasy v $group jsou zapnuty.",
+    "alias-group-list-disabled": "$sender, aliasy v $group jsou vypnuty."
   },
   "customcmds": {
-    "commands-parse-failed": "{core.command-parse} !commands",
+    "commands-parse-failed": "{core.command-parse} $command",
     "command-was-not-found": "$sender, příkaz $command nebyl nalezen v databázi",
     "response-was-not-found": "$sender, odpověď #$response příkazu $command nebyla v databázi nalezena",
     "command-was-edited": "$sender, příkaz $command je změněn na '$response'",
@@ -864,13 +882,16 @@
     "keyword-parse-failed": "{core.command-parse} !keyword",
     "keyword-is-ambiguous": "$sender, klíčové slovo $keyword je nejednoznačné, použijte ID klíčového slova",
     "keyword-was-not-found": "$sender, klíčové slovo $keyword nebylo nalezeno v databázi",
+    "response-was-not-found": "$sender, odpověď #$response klíčového slova $keyword nebyla nalezena",
     "keyword-was-edited": "$sender, klíčové slovo $keyword je změněno na '$response'",
     "keyword-was-added": "$sender, klíčové slovo $keyword ($id) bylo přidáno",
-    "list-is-not-empty": "$sender, seznam klíčových slov",
+    "list-is-not-empty": "$sender, seznam klíčových slov: $list",
     "list-is-empty": "$sender, seznam klíčových slov je prázdný",
     "keyword-was-enabled": "$sender, keyword $keyword byl zapnut",
     "keyword-was-disabled": "$sender, keyword $keyword byl vypnut",
-    "keyword-was-removed": "$sender, klíčové slovo $keyword bylo smazáno"
+    "keyword-was-removed": "$sender, klíčové slovo $keyword bylo smazáno",
+    "list-of-responses-is-empty": "$sender, $keyword nemá žádné odpovědi nebo neexistuje",
+    "response": "$keyword#$index ($permission) $after| $response"
   },
   "points": {
     "success": {
@@ -894,6 +915,7 @@
       "set": "{core.command-parse} $command [username] [amount]",
       "give": "{core.command-parse} $command [username] [amount]",
       "giveNotEnough": "Omlouváme se, $sender, nemáte $amount $pointsName k darování pro $username",
+      "cannotGiveZeroPoints": "Promiň, $sender, nemůžeš dát $amount $pointsName uživateli $username",
       "get": "{core.command-parse} $command [username]",
       "online": "{core.command-parse} $command [amount]",
       "all": "{core.command-parse} $command [amount]",
@@ -902,17 +924,12 @@
       "remove": "{core.command-parse} $command [username] [amount]"
     },
     "defaults": {
-      "pointsName": {
-        "single": "bod",
-        "multi": "bodů",
-        "xmulti": ""
-      },
       "pointsResponse": "$username má momentálně $amount $pointsName. Vaše pozice je $order/$count."
     }
   },
   "songs": {
     "playlist-is-empty": "$sender, seznam skladeb k importu je prázdný",
-    "playlist-imported": "$sender, importováno $imported a vynecháno $skipped ze seznamu skladeb",
+    "playlist-imported": "$sender, importováno $imported a přeskočeno $skipped do seznamu skladeb",
     "not-playing": "Nic nehraje",
     "song-was-banned": "Pisen $name byla zabanovana a nebude uz nikdy hrat!",
     "song-was-banned-timeout-message": "Dostal si timeout za zabanovanou skladbu",
@@ -921,15 +938,22 @@
     "no-song-is-currently-playing": "Žádné skladby momentálně nehrají",
     "current-song-from-playlist": "Aktuální skladba je $name ze seznamu skladeb",
     "current-song-from-songrequest": "Aktuální skladba je $name požadovaná uživatelem $username",
+    "songrequest-disabled": "Omlouváme se, $sender, požadavky na skladbu jsou vypnuty.",
     "song-is-banned": "Omlouváme se, $sender, ale tato skladba je zakázána",
+    "youtube-is-not-responding-correctly": "Omlouváme se, $sender, ale YouTube odesílá neočekávané odpovědi, zkuste to prosím později.",
     "song-was-not-found": "Omlouváme se, $sender, ale tato skladba nebyla nalezena",
     "song-is-too-long": "Omlouváme se, $sender, ale tato skladba je příliš dlouhá",
+    "this-song-is-not-in-playlist": "Omlouváme se, $sender, ale tato skladba není v aktuálním seznamu skladeb",
     "incorrect-category": "Omlouváme se, $sender, ale tato skladba musí být kategorie hudby",
     "song-was-added-to-queue": "$sender, skladba $name byla přidána do fronty",
     "song-was-added-to-playlist": "$sender, skladba $name byla přidána do seznamu skladeb",
     "song-is-already-in-playlist": "$sender, skladba $name je již v seznamu skladeb",
     "song-was-removed-from-playlist": "$sender, skladba $name byla odebrána ze seznamu skladeb",
-    "song-was-removed-from-queue": "$sender, vaše skladba $name byla odebrána z fronty"
+    "song-was-removed-from-queue": "$sender, vaše skladba $name byla odebrána z fronty",
+    "playlist-current": "$sender, aktuální seznam skladeb je $playlist.",
+    "playlist-list": "$sender, dostupné seznamy skladeb: $list.",
+    "playlist-not-exist": "$sender, Váš požadovaný seznam skladeb $playlist neexistuje.",
+    "playlist-set": "$sender, změnili jste seznam skladeb na $playlist."
   },
   "price": {
     "price-parse-failed": "{core.command-parse} !price",
@@ -939,6 +963,8 @@
     "price-was-enabled": "$sender, cena za $command byla zapnuta",
     "price-was-disabled": "$sender, cena za $command byla vypnuta",
     "user-have-not-enough-points": "Omlouváme se, $sender, ale nemáš $amount $pointsName k použití $command",
+    "user-have-not-enough-points-or-bits": "Omlouváme se, $sender, ale nemáš $amount $pointsName nebo $bitsAmount bitů k použití $command",
+    "user-have-not-enough-bits": "Omlouváme se, $sender, ale k použití $command musíte použít $bitsAmount bitů",
     "list-is-empty": "$sender, seznam cen je prázdný",
     "list-is-not-empty": "$sender, seznam cen: $list"
   },
@@ -1009,6 +1035,8 @@
     "without-permission": "Nemáte dostatečná oprávnění pro '$command'"
   },
   "moderation": {
+    "user-have-immunity": "$sender, uživatel $username má $type imunitu po dobu $time vteřin",
+    "user-have-immunity-parameterError": "$sender, chyba parametru. $command <username> <type> <duration>",
     "user-have-link-permit": "Uživatel $username může odeslat $count $link do chatu",
     "permit-parse-failed": "{core.command-parse} !permit [username]",
     "user-is-warned-about-links": "Nejsou povoleny žádné odkazy, požádejte o povolení [$count varování zbývá]",
@@ -1018,7 +1046,7 @@
     "user-is-warned-about-spam": "Spamování není povoleno [$count varování zbývá]",
     "user-is-warned-about-color": "Používání /me není povoleno [$count varování zbývá]",
     "user-is-warned-about-emotes": "Žádné spamování smajlíkama! [$count varování zbývá]",
-    "user-is-warned-about-blacklist": "Žádná zakázaná slova [$count varování zbývá]",
+    "user-is-warned-about-forbidden-words": "Žádná zakázaná slova [$count varování zbývá]",
     "user-have-timeout-for-links": "Nejsou povoleny žádné odkazy, požádejte o povolení",
     "user-have-timeout-for-symbols": "Přílišné používání symbolů není povoleno",
     "user-have-timeout-for-long-message": "Dlouhé zprávy nejsou povoleny",
@@ -1026,7 +1054,7 @@
     "user-have-timeout-for-spam": "Spamování není povoleno",
     "user-have-timeout-for-color": "Používání /me není povoleno",
     "user-have-timeout-for-emotes": "Žádné spamování smajlíkama",
-    "user-have-timeout-for-blacklist": "Žádná zakázaná slova"
+    "user-have-timeout-for-forbidden-words": "Žádná zakázaná slova"
   },
   "queue": {
     "list": "$sender, ve frontě jsou přihlášení: $users",
@@ -1060,10 +1088,9 @@
     }
   },
   "cooldowns": {
-    "cooldown-parse-failed": "{core.command-parse} !cooldown [keyword|!command] [global|user] [seconds] [true/false]",
     "cooldown-was-set": "$sender, $type cooldown pro $command byl nastaven na $secondss",
-    "cooldown-was-unset": "$sender, $type cooldown pro $command byl zrušen",
-    "cooldown-triggered": "$sender, nemůžete použít $command, zbývá $secondss",
+    "cooldown-was-unset": "$sender, cooldown pro $command byl zrušen",
+    "cooldown-triggered": "$sender, '$command' má cooldown, zbývá $secondss",
     "cooldown-not-found": "$sender, cooldown pro $command nebyl nalezen",
     "cooldown-was-enabled": "$sender, cooldown pro $command byl zapnut",
     "cooldown-was-disabled": "$sender, cooldown pro $command byl vypnut",
@@ -1083,6 +1110,7 @@
     "response-must-be-defined": "$sender, odpověď časovače musí být definována.",
     "cannot-set-messages-and-seconds-0": "$sender, nemůžete nastavit zprávy i sekundy na 0.",
     "timer-was-set": "$sender, časovač $name byl nastaven na $messages zpráv a $seconds sekund ke spuštění",
+    "timer-was-set-with-offline-flag": "$sender, časovač $name byl nastaven na $messages zpráv a $seconds sekund ke spuštění, i když je stream offline",
     "timer-not-found": "$sender, časovač (název: $name) nebyl nalezen v databázi. Pro seznam časovačů -> !timers list",
     "timer-deleted": "$sender, časovač $name a jeho odpovědi byly odstraněny.",
     "timer-enabled": "$sender, časovač (název: $name) byl povolen",
@@ -1143,7 +1171,10 @@
       "win": "$sender, VYHRÁLS! Aktuálně máš $points $pointsName",
       "winJackpot": "$sender, vyhrál jste JACKPOT! Získal jsi $jackpot $jackpotName navíc ke své sázce. Nyní máte $points $pointsName",
       "loseWithJackpot": "$sender, PROHRÁLS! Aktuálně máš $points $pointsName. Jackpot se zvýšil na $jackpot $jackpotName",
-      "lose": "$sender, PROHRÁLS! Aktuálně máš $points $pointsName"
+      "lose": "$sender, PROHRÁLS! Aktuálně máš $points $pointsName",
+      "currentJackpot": "$sender, současný jackpot pro $command je $points $pointsName",
+      "winJackpotCount": "$sender, vyhrál/a jsi $count jackpotů",
+      "jackpotIsDisabled": "$sender, jackpot je vypnutý pro $command."
     }
   },
   "highlights": {
@@ -1157,8 +1188,8 @@
   "whisper": {
     "settings": {
       "disablePermissionWhispers": {
-        "true": "Bot nebude posílat chyby oprávnění",
-        "false": "Bot bude posílat chyby oprávnění přes whisper"
+        "true": "Bot nebude odesílat chyby při nedostatečném oprávnění",
+        "false": "Bot nebude šeptat chyby při nedostatečném oprávnění"
       },
       "disableCooldownWhispers": {
         "true": "Bot nebude posílat oznámení o cooldownu",
@@ -1169,7 +1200,7 @@
   "phillipsHue": {
     "list": "$sender, seznam připojených světel Phillips Hue: "
   },
-  "time": "Aktuální čas streamera v jeho časovém pásmu je $time",
+  "time": "Aktuální čas v časovém pásmu streamu je $time",
   "subs": "$sender, je zde právě $onlineSubCount online subscriberů. Poslední sub/resub byl $lastSubUsername $lastSubAgo",
   "followers": "$sender, je zde právě $onlineFollowersCount online followerů. Poslední follow byl $lastFollowUsername $lastFollowAgo",
   "ignore": {

@@ -6,11 +6,11 @@ const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 const variable = require('../../general.js').variable;
 
-const { round5 } = require('../../../dest/commons');
+const { round5 } = require('../../../dest/helpers/commons/round5');
 
 const assert = require('assert');
 
-describe('lib/commons - round5()', () => {
+describe('lib/commons - @func2 - round5()', () => {
   it('6 => 5', async () => {
     assert.deepEqual(round5(6), 5);
   });

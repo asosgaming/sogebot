@@ -1,18 +1,23 @@
-/* global describe it beforeEach */
-require('../../general.js');
+/* global  */
 
 const assert = require('assert');
 
+const cooldown = (require('../../../dest/systems/cooldown')).default;
 const db = require('../../general.js').db;
 const message = require('../../general.js').message;
+const url = require('../../general.js').url;
 
-const cooldown = (require('../../../dest/systems/cooldown')).default;
+require('../../general.js');
 
 // users
-const owner = { userId: Math.floor(Math.random() * 100000), badges: {}, username: 'soge__' };
-const testUser = { userId: Math.floor(Math.random() * 100000), badges: {}, username: 'test' };
+const owner = {
+  userId: String(Math.floor(Math.random() * 100000)), badges: {}, userName: '__broadcaster__',
+};
+const testUser = {
+  userId: String(Math.floor(Math.random() * 100000)), badges: {}, userName: 'test',
+};
 
-describe('Cooldowns - toggleEnabled()', () => {
+describe('Cooldowns - toggleEnabled() - @func3', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();
@@ -24,10 +29,10 @@ describe('Cooldowns - toggleEnabled()', () => {
     const r2 = await cooldown.toggleEnabled({ sender: owner, parameters: command });
 
     assert.strictEqual(r[0].response, '$sender, user cooldown for !me was set to 60s');
-    assert.strictEqual(r2[0].response, 'Sorry, $sender, but this command is not correct, use !cooldown [keyword|!command] [global|user] [seconds] [true/false]');
+    assert.strictEqual(r2[0].response, 'Usage => ' + url + '/systems/cooldowns');
   });
 
-  it('correct toggle', async () => {
+  it('correct toggle - command', async () => {
     const [command, type, seconds, quiet] = ['!me', 'user', '60', true];
     const r = await cooldown.main({ sender: owner, parameters: `${command} ${type} ${seconds} ${quiet}` });
     const r2 = await cooldown.toggleEnabled({ sender: owner, parameters: `${command} ${type}` });
@@ -42,5 +47,40 @@ describe('Cooldowns - toggleEnabled()', () => {
 
     const r3 = await cooldown.toggleEnabled({ sender: owner, parameters: `${command} ${type}` });
     assert.strictEqual(r3[0].response, '$sender, cooldown for !me was enabled');
+  });
+
+  it('correct toggle - group', async () => {
+    const [command, type, seconds, quiet] = ['g:voice', 'user', '60', true];
+    const r = await cooldown.main({ sender: owner, parameters: `${command} ${type} ${seconds} ${quiet}` });
+    const r2 = await cooldown.toggleEnabled({ sender: owner, parameters: `${command} ${type}` });
+
+    assert.strictEqual(r[0].response, '$sender, user cooldown for g:voice was set to 60s');
+    assert.strictEqual(r2[0].response, '$sender, cooldown for g:voice was disabled');
+
+    let isOk = await cooldown.check({ sender: testUser, message: 'g:voice' });
+    assert(isOk);
+    isOk = await cooldown.check({ sender: testUser, message: 'g:voice' });
+    assert(isOk);
+
+    const r3 = await cooldown.toggleEnabled({ sender: owner, parameters: `${command} ${type}` });
+    assert.strictEqual(r3[0].response, '$sender, cooldown for g:voice was enabled');
+  });
+
+  it('correct toggle - keyword', async () => {
+    const [command, type, seconds, quiet] = ['KEKW', 'user', '60', true];
+    const r = await cooldown.main({ sender: owner, parameters: `${command} ${type} ${seconds} ${quiet}` });
+
+    const r2 = await cooldown.toggleEnabled({ sender: owner, parameters: `${command} ${type}` });
+
+    assert.strictEqual(r[0].response, '$sender, user cooldown for KEKW was set to 60s');
+    assert.strictEqual(r2[0].response, '$sender, cooldown for KEKW was disabled');
+
+    let isOk = await cooldown.check({ sender: testUser, message: 'KEKW' });
+    assert(isOk);
+    isOk = await cooldown.check({ sender: testUser, message: 'KEKW' });
+    assert(isOk);
+
+    const r3 = await cooldown.toggleEnabled({ sender: owner, parameters: `${command} ${type}` });
+    assert.strictEqual(r3[0].response, '$sender, cooldown for KEKW was enabled');
   });
 });

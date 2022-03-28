@@ -16,7 +16,7 @@ const raffles = (require('../../../dest/systems/raffles')).default;
 
 const assert = require('assert');
 
-describe('Raffles - allowOverTicketing', () => {
+describe('Raffles - allowOverTicketing - @func1', () => {
   describe('Disabled allowOverTicketing', () => {
     before(async () => {
       await db.cleanup();
@@ -27,16 +27,11 @@ describe('Raffles - allowOverTicketing', () => {
 
     it('create ticket raffle', async () => {
       raffles.open({ sender: user.owner, parameters: '!winme -min 0 -max 500' });
-      await message.isSent('raffles.announce-ticket-raffle', { username: 'bot' }, {
-        keyword: '!winme',
-        eligibility: await commons.prepare('raffles.eligibility-everyone-item'),
-        min: 1,
-        max: 500,
-      });
+      await message.isSentRaw('Raffle is running (0 entries). To enter type "!winme <1-500>". Raffle is opened for everyone.', { userName: '__bot__' });
     });
 
     it('Update viewer to have 10 points', async () => {
-      await getRepository(User).save({ username: user.viewer.username, userId: user.viewer.userId, points: 10 });
+      await getRepository(User).save({ userName: user.viewer.userName, userId: user.viewer.userId, points: 10 });
     });
 
     it('Viewer bets over 10 points', async () => {
@@ -88,16 +83,11 @@ describe('Raffles - allowOverTicketing', () => {
 
     it('create ticket raffle', async () => {
       raffles.open({ sender: user.owner, parameters: '!winme -min 0 -max 500' });
-      await message.isSent('raffles.announce-ticket-raffle', { username: 'bot' }, {
-        keyword: '!winme',
-        eligibility: await commons.prepare('raffles.eligibility-everyone-item'),
-        min: 1,
-        max: 500,
-      });
+      await message.isSentRaw('Raffle is running (0 entries). To enter type "!winme <1-500>". Raffle is opened for everyone.', { userName: '__bot__' });
     });
 
     it('Update viewer to have 10 points', async () => {
-      await getRepository(User).save({ username: user.viewer.username, userId: user.viewer.userId, points: 10 });
+      await getRepository(User).save({ userName: user.viewer.userName, userId: user.viewer.userId, points: 10 });
     });
 
     it('Viewer bets over 10 points', async () => {

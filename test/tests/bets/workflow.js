@@ -1,26 +1,27 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-/* global describe it */
+/* global */
 require('../../general.js');
 
-const db = require('../../general.js').db;
 const assert = require('assert');
-const message = require('../../general.js').message;
+
 const _ = require('lodash');
-
 const { getRepository } = require('typeorm');
-const { User } = require('../../../dest/database/entity/user');
-const { Bets } = require('../../../dest/database/entity/bets');
 
+const { Bets } = require('../../../dest/database/entity/bets');
+const { User } = require('../../../dest/database/entity/user');
+const changelog = (require('../../../dest/helpers/user/changelog'));
 const bets = (require('../../../dest/systems/bets')).default;
+const db = require('../../general.js').db;
+const message = require('../../general.js').message;
 
 // users
-const owner = { username: 'soge__' };
+const owner = { userName: '__broadcaster__' };
 
 const tests = {
   false: [
     {
       timeout: 5,
-      title: 'Jak se umistim?',
+      title:   'Jak se umistim?',
       options: [
         'Vyhra',
       ],
@@ -30,59 +31,95 @@ const tests = {
   true: [
     {
       timeout: 5,
-      title: 'Jak se umistim?',
+      title:   'Jak se umistim?',
       options: [
         'Vyhra',
         'Top 3',
         'Top 10',
       ],
       bets: [
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 1, betOn: 0 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 2, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 3, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 4, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 5, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 6, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 7, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 8, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 9, betOn: 2 },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 10, betOn: 0,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 20, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 30, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 40, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 50, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 60, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 70, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 80, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 90, betOn: 2,
+        },
       ],
-      win: 0,
-      winTickets: 2,
-      response: {
-        open: `New bet 'Jak se umistim?' is opened! Bet options: 1. 'Vyhra', 2. 'Top 3', 3. 'Top 10'. Use !bet 1-3 <amount> to win! You have only 5min to bet!`,
-        close: `Bets was closed and winning option was Vyhra! 1 users won in total 2 points!`,
+      win:        0,
+      winTickets: 16,
+      response:   {
+        open:  `New bet 'Jak se umistim?' is opened! Bet options: 1. 'Vyhra', 2. 'Top 3', 3. 'Top 10'. Use !bet 1-3 <amount> to win! You have only 5min to bet!`,
+        close: `Bets was closed and winning option was Vyhra! 1 users won in total 16 points!`,
       },
     },
     {
       timeout: 5,
-      title: 'Vyhra / Prohra',
+      title:   'Vyhra / Prohra',
       options: [
         'Vyhra',
         'Prohra',
       ],
       bets: [
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 1, betOn: 0 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 2, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 3, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 4, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 5, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 6, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 7, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 8, betOn: 1 },
-        { username: String(Math.random()), userId: Math.floor(Math.random() * 100000), tickets: 9, betOn: 0 },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 10, betOn: 0,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 20, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 30, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 40, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 50, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 60, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 70, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 80, betOn: 1,
+        },
+        {
+          userName: Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5), userId: String(Math.floor(Math.random() * 100000)), tickets: 90, betOn: 0,
+        },
       ],
-      win: 1,
-      winTickets: 49,
-      response: {
-        open: `New bet 'Vyhra / Prohra' is opened! Bet options: 1. 'Vyhra', 2. 'Prohra'. Use !bet 1-2 <amount> to win! You have only 5min to bet!`,
-        close: `Bets was closed and winning option was Prohra! 7 users won in total 49 points!`,
+      win:        1,
+      winTickets: 490,
+      response:   {
+        open:  `New bet 'Vyhra / Prohra' is opened! Bet options: 1. 'Vyhra', 2. 'Prohra'. Use !bet 1-2 <amount> to win! You have only 5min to bet!`,
+        close: `Bets was closed and winning option was Prohra! 7 users won in total 490 points!`,
       },
     },
   ],
 };
 
-describe('Bets - workflow()', () => {
+describe('Bets - @func3 - workflow()', () => {
   for (let [s, ta] of Object.entries(tests)) {
     s = s === 'true';
 
@@ -108,7 +145,7 @@ describe('Bets - workflow()', () => {
           it ('Bet open should failed', async() => {
             const currentBet = await getRepository(Bets).findOne({
               relations: ['participations'],
-              order: { createdAt: 'DESC' },
+              order:     { createdAt: 'DESC' },
             });
             assert(typeof currentBet === 'undefined');
           });
@@ -119,7 +156,7 @@ describe('Bets - workflow()', () => {
           it ('!bet open should be correctly saved in db', async() => {
             const currentBet = await getRepository(Bets).findOne({
               relations: ['participations'],
-              order: { createdAt: 'DESC' },
+              order:     { createdAt: 'DESC' },
             });
 
             assert(typeof currentBet !== 'undefined');
@@ -129,20 +166,40 @@ describe('Bets - workflow()', () => {
           });
 
           for (const bet of t.bets) {
-            it(`user ${bet.username} will bet on ${bet.betOn + 1} ${bet.tickets} tickets`, async () => {
-              await getRepository(User).save({ username: bet.username , userId: bet.userId, points: bet.tickets + 10 });
+            it(`user ${bet.userName} will bet on ${bet.betOn + 1} ${bet.tickets} tickets`, async () => {
+              await getRepository(User).save({
+                userName: bet.userName , userId: bet.userId, points: 100,
+              });
               await bets.participate({
                 parameters: `${bet.betOn + 1} ${bet.tickets}`,
-                sender: { username: bet.username, userId: bet.userId },
-                command: '!bet',
+                sender:     { userName: bet.userName, userId: bet.userId },
+                command:    '!bet',
               });
             });
           }
 
           it('Bet close should have correct win message', async () => {
-            r = await bets.close({parameters: `${t.win}`, sender: owner});
+            r = await bets.close({ parameters: `${t.win}`, sender: owner });
             assert.strictEqual(r[0].response, t.response.close);
           });
+
+          for (const bet of t.bets) {
+            if (t.win !== bet.betOn) {
+              it(`LOST: user ${bet.userName} should have ${100 - bet.tickets} tickets`, async () => {
+                await changelog.flush();
+                const user = await getRepository(User).findOne({ userName: bet.userName , userId: bet.userId });
+                assert.strictEqual(user.points, 100 - bet.tickets);
+              });
+            } else {
+              const percentGain = (t.options.length * 20) / 100;
+              const expected = 100 + Math.round(bet.tickets * percentGain);
+              it(`WIN: user ${bet.userName} should have ${expected} tickets`, async () => {
+                await changelog.flush();
+                const user = await getRepository(User).findOne({ userName: bet.userName , userId: bet.userId });
+                assert.strictEqual(user.points, expected);
+              });
+            }
+          }
         }
       });
     }
@@ -171,7 +228,7 @@ describe('Open bet twice should fail', () => {
   it ('!bet open should be correctly saved in db', async() => {
     const currentBet = await getRepository(Bets).findOne({
       relations: ['participations'],
-      order: { createdAt: 'DESC' },
+      order:     { createdAt: 'DESC' },
     });
 
     assert(typeof currentBet !== 'undefined');
@@ -202,7 +259,7 @@ describe('Bet close should fail if bet is not opened', () => {
   });
 
   it('close bet', async () => {
-    r = await bets.close({parameters: `0`, sender: owner});
+    r = await bets.close({ parameters: `0`, sender: owner });
   });
 
   it('Expect bets.notRunning error', async () => {
@@ -212,7 +269,7 @@ describe('Bet close should fail if bet is not opened', () => {
 
 describe('Bet close should fail if wrong option is given', () => {
   let r;
-  command = '!bet';
+  const command = '!bet';
 
   before(async () => {
     await db.cleanup();
@@ -234,7 +291,7 @@ describe('Bet close should fail if wrong option is given', () => {
   it ('!bet open should be correctly saved in db', async() => {
     const currentBet = await getRepository(Bets).findOne({
       relations: ['participations'],
-      order: { createdAt: 'DESC' },
+      order:     { createdAt: 'DESC' },
     });
 
     assert(typeof currentBet !== 'undefined');
@@ -244,7 +301,9 @@ describe('Bet close should fail if wrong option is given', () => {
   });
 
   it('close bet with incorrect option', async () => {
-    r = await bets.close({parameters: `10`, sender: owner, command});
+    r = await bets.close({
+      parameters: `10`, sender: owner, command,
+    });
   });
 
   it('Expect bets.notRunning error', async () => {
@@ -254,7 +313,7 @@ describe('Bet close should fail if wrong option is given', () => {
 
 describe('Incorrect participate should show info', () => {
   let r;
-  command = '!bet';
+  const command = '!bet';
 
   before(async () => {
     await db.cleanup();
@@ -276,7 +335,7 @@ describe('Incorrect participate should show info', () => {
   it ('!bet open should be correctly saved in db', async() => {
     const currentBet = await getRepository(Bets).findOne({
       relations: ['participations'],
-      order: { createdAt: 'DESC' },
+      order:     { createdAt: 'DESC' },
     });
 
     assert(typeof currentBet !== 'undefined');
@@ -286,7 +345,9 @@ describe('Incorrect participate should show info', () => {
   });
 
   it('Incorrect participate should show info', async () => {
-    r = await bets.participate({parameters: '', sender: owner, command});
+    r = await bets.participate({
+      parameters: '', sender: owner, command,
+    });
   });
 
   it('Expect bets.info', async () => {
@@ -296,7 +357,7 @@ describe('Incorrect participate should show info', () => {
 
 describe('Bet info should show all correct states', () => {
   let r;
-  command = '!bet';
+  const command = '!bet';
 
   before(async () => {
     await db.cleanup();
@@ -304,7 +365,9 @@ describe('Bet info should show all correct states', () => {
   });
 
   it('Run bet info without bet', async () => {
-    r = await bets.participate({parameters: '', sender: owner, command});
+    r = await bets.participate({
+      parameters: '', sender: owner, command,
+    });
   });
 
   it('Expect bets.notRunning', async () => {
@@ -326,7 +389,7 @@ describe('Bet info should show all correct states', () => {
   it ('!bet open should be correctly saved in db', async() => {
     const currentBet = await getRepository(Bets).findOne({
       relations: ['participations'],
-      order: { createdAt: 'DESC' },
+      order:     { createdAt: 'DESC' },
     });
 
     assert(typeof currentBet !== 'undefined');
@@ -336,7 +399,9 @@ describe('Bet info should show all correct states', () => {
   });
 
   it('Bet info when opened bet', async () => {
-    r = await bets.participate({parameters: '', sender: owner, command});
+    r = await bets.participate({
+      parameters: '', sender: owner, command,
+    });
   });
 
   it('Expect bets.info', async () => {
@@ -348,7 +413,9 @@ describe('Bet info should show all correct states', () => {
   });
 
   it('Bet info when locked bet', async () => {
-    r = await bets.info({parameters: '', sender: owner, command});
+    r = await bets.info({
+      parameters: '', sender: owner, command,
+    });
   });
 
   it('Expect bets.lockedInfo', async () => {

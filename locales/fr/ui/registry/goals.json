@@ -4,7 +4,7 @@
   "newGoal": "new Goal",
   "newGoalGroup": "new Goal Group",
   "goals": "Goals",
-  "general": "General",
+  "general": "Général",
   "display": "Display",
   "fontSettings": "Font Settings",
   "barSettings": "Bar Settings",
@@ -49,13 +49,10 @@
       "title": "Type"
     },
     "nameGroup": {
-      "title": "Name of this goal group",
-      "placeholder": "Set name of this goal group",
-      "help": "If kept empty, name will be randomly generated"
+      "title": "Name of this goal group"
     },
     "name": {
-      "title": "Name of this goal",
-      "placeholder": "Set name of this goal"
+      "title": "Name of this goal"
     },
     "displayAs": {
       "title": "Display as",
@@ -75,6 +72,9 @@
       "title": "Animation Out duration",
       "help": "This value is in milliseconds",
       "placeholder": "Set your animation Out duration"
+    },
+    "interval": {
+      "title": "What interval to count"
     },
     "spaceBetweenGoalsInPx": {
       "title": "Space between goals",

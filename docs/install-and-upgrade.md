@@ -1,7 +1,7 @@
 ## Prerequisites
 
 - **Browsers**: only latest Chrome/Chromium stable are supported
-- **[Node.js](https://nodejs.org/en/)**: latest **current** or **LTS** version
+- **[Node.js](https://nodejs.org/en/)**: **16.x LTS** version
 - **RAM**: Minimum 512MB, Recommended 1024MB
 - **HDD**: Minimum 500MB
 - Twitch bot account
@@ -13,9 +13,9 @@
 
 ### Docker prerequisites
 
-- **Docker**, Any of the [supported repositories](http://sogehige.github.io/sogeBot/#/configuration/database)
+- **Docker**, Any of the [supported repositories](http://sogebot.github.io/sogeBot/#/configuration/database)
 
-### Instalation
+### Docker installation
 
 !> If you want to use **SQLite**, be sure to use `./shared/sogebot.db` path to
    your db file, so you have an access outside of docker.
@@ -27,7 +27,7 @@
     - From GIT: `git clone git@github.com:sogehige/sogeBot-docker.git`
     - Without GIT as [ZIP](https://github.com/sogehige/sogeBot-docker/archive/master.zip)
 2. Configure properly .env file in `root` directory
-    - You can find examples at [our GitHub repository](https://github.com/sogehige/sogeBot/tree/master/src/bot/data)
+    - You can find examples at [our GitHub repository](https://github.com/sogebot/sogeBot/tree/master/src/data)
 3. Download bot images with `docker compose`
     - Release version: `docker-compose pull`
     - Nightly version: `docker-compose -f docker-compose-nightly.yml pull`
@@ -35,14 +35,42 @@
     - Release version: `docker-compose up`
     - Nightly version: `docker-compose -f docker-compose-nightly.yml up`
 
-## From zipfile
+### Upgrade bot from Docker
 
-### Installation
+1. Stop your docker container
+2. Run steps 3. and 4. from Installation
 
-- Download latest release from [GitHub sogeBot release page](https://github.com/sogehige/sogeBot/releases)
+## From ZIP
+
+### Stable
+
+- Download latest release from
+  [GitHub sogeBot release page](https://github.com/sogebot/sogeBot/releases)
+- Continue at [ZIP Installation](#zip-installation)
+
+### Nightlies
+
+- Download desired nightly version from [GitHub sogeBot nightlies page](https://github.com/sogebot/sogeBot/actions?query=workflow%3ANightlies)
+- Select run, you want to use (newest first)
+
+![create-new-app](./_images/install/nightlies.png)
+
+- Scroll down and download nightly artifact
+
+![create-new-app](./_images/install/artifact.png)
+
+- Continue at [ZIP Installation](#zip-installation)
+
+### ZIP Installation
+
+- Download your stable release or nightly (see above)
 - Set your [database environment](configuration/database)
-- if you want to use `!title` and `!game` you need to add bot as channel editor
+- Add bot as channel editor
   in [Permissions settings](http://twitch.tv/dashboard/permissions) on Twitch
+- be sure that you have latest npm installed
+
+    `npm install -g npm@latest`
+
 - before starting a bot, you need to install npm dependencies
 
     `npm ci`
@@ -54,19 +82,30 @@
 - To access webpanel, go to `http://localhost:<port>` where port is configured
   as PORT env variable, e.g. `PORT=20001 npm start`
 
-## From git
+### Upgrade bot from ZIP
+
+1. Backup your `.env` and, if using sqlite3, `sogebot.db` file
+2. Remove your sogeBot directory
+3. Go through Installation steps
+4. Before `npm start` recopy your backup back to bot folder
+
+## From GIT
 
 ### Build prerequisites
 
-- **Bash**, **Make**
+- **Bash**, **Make**, **Git**
 
-### Installation (snapshot)
+### GIT Installation
 
-- Download [latest master zip](https://github.com/sogehige/sogeBot/archive/master.zip)
-  or clone repository `git clone https://github.com/sogehige/sogeBot.git`
+- Download [latest master zip](https://github.com/sogebot/sogeBot/archive/master.zip)
+  or clone repository `git clone https://github.com/sogebot/sogeBot.git`
 - Set your [database environment](configuration/database)
-- if you want to use `!title` and `!game` you need to add bot as channel editor
+- Add bot as channel editor
   in [Permissions settings](http://twitch.tv/dashboard/permissions) on Twitch
+- be sure that you have latest npm installed
+
+    `npm install -g npm@latest`
+
 - before starting a bot, you need to build a bot
 
     `make`
@@ -78,20 +117,22 @@
 - To access webpanel, go to `http://localhost:<port>` where port is configured
   in config.json (default: 20000)
 
-### NEDB
+### Upgrade bot from GIT
 
-- run `node tools/database.js --from nedb`
+1. Backup your database
+2. Update bot with `git pull -r origin master`
+3. Run `npm install -g npm@latest`
+4. Run `make`
+5. Start bot `npm start`
 
-### MongoDB
+## Unofficial Installer
 
-- run `node tools/database.js --from mongodb --mongoUri <your-mongouri>`
+- Download the binary (linux) or exe (windows) from https://github.com/liadala/sogeToGo/releases
+- Execute the Binary/Exe
+- Add bot as channel editor
+  in [Permissions settings](http://twitch.tv/dashboard/permissions) on Twitch
 
-## Oauth generation
+- To access webpanel, go to `http://localhost:20000`
 
-Generate your oauth tokens in `ui->settings->general->oauth` and paste your
-`accessToken` and `refreshToken` from [Twitch Token Generator](https://twitchtokengenerator.com)
-to your bot.
-
-!> Make sure you login into correct accounts. Anonymous/Privacy modes can help
-   you with login into correct accounts (Right click on generate button -> Open
-  link in incognito window)
+This will also keep your Bot updated (check on every start)
+for issues or problems please open a [issue](https://github.com/liadala/sogeToGo/issues) at this repository

@@ -1,7 +1,0 @@
-function onStarted() {
-  // triggered on animationIn
-}
-
-function onEnded() {
-  // triggered on animationOut
-}

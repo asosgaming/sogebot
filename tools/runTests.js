@@ -1,31 +1,39 @@
+const child_process = require('child_process');
 const fs = require('fs');
-const child_process = require('child_process')
 
-let status = 0
+let status = 0;
 async function retest() {
   const file = fs.readFileSync('report').toString();
-  const regexp = /^  \d\)(.*)$/gm
-  let match = file.match(regexp)
+  const regexp = /^ {2}\d\)(.*)$/gm;
+  const match = file.match(regexp);
 
   if (match) {
-    for (let suite of new Set(match.map((o) => {
-      return o.trim().split(/\d\) /)[1]
+    for (const suite of new Set(match.map((o) => {
+      return o.trim().split(/\d\) /)[1];
     }))) {
       await new Promise((resolve) => {
-        console.log('------------------------------------------------------------------------------')
-        console.log('\t=> Re-Running ' + suite + ' tests')
-        console.log('------------------------------------------------------------------------------')
+        console.log('------------------------------------------------------------------------------');
+        console.log('\tRemoving sogebot.db file');
+        console.log('------------------------------------------------------------------------------');
+        if (fs.existsSync('./sogebot.db')) {
+          fs.unlinkSync('./sogebot.db');
+        }
+
+        console.log('------------------------------------------------------------------------------');
+        console.log('\t=> Re-Running ' + suite + ' tests');
+        console.log('------------------------------------------------------------------------------');
         const p = child_process.spawn('npx', [
+          'nyc',
+          '--clean=false',
           'mocha',
+          '-r', 'tsconfig-paths/register',
           '-r', 'source-map-support/register',
-          '--timeout', '60000',
+          '--timeout', '120000',
           '--exit',
-          '--grep="' + suite.replace('(!#)', '') + '"',
+          '--fgrep="' + suite + '"',
           '--recursive',
-          'test/'
-        ], {
-          shell: true,
-        });
+          'test/',
+        ], { shell: true });
 
         let output = '';
         p.stdout.on('data', (data) => {
@@ -44,40 +52,68 @@ async function retest() {
           }
           if (code !== 0 || output.includes(' 0 passing')) {
             status = 1; // force status 1
-            console.log('------------------------------------------------------------------------------')
-            console.log('\t=> Failed ' + suite + ' tests')
-            console.log('------------------------------------------------------------------------------')
+            console.log('------------------------------------------------------------------------------');
+            console.log('\t=> Failed ' + suite + ' tests');
+            console.log('------------------------------------------------------------------------------');
           } else {
-            console.log('------------------------------------------------------------------------------')
-            console.log('\t=> OK ' + suite + ' tests')
-            console.log('------------------------------------------------------------------------------')
+            console.log('------------------------------------------------------------------------------');
+            console.log('\t=> OK ' + suite + ' tests');
+            console.log('------------------------------------------------------------------------------');
           }
           resolve();
         });
-      })
+      });
     }
   } else {
     if (status === 1) {
       console.log('\n\n Didn\'t found any tests to rerun, but still got some error during test run');
     } else {
-      console.log('\n\t No tests to rerun :)\n\n')
+      console.log('\n\t No tests to rerun :)\n\n');
     }
   }
+
+  console.log('------------------------------------------------------------------------------');
+  console.log('\t=> Merging coverage.json');
+  console.log('------------------------------------------------------------------------------');
+  child_process.spawnSync('npx', [
+    'nyc',
+    'merge',
+    './.nyc_output/',
+    './coverage/coverage-final.json',
+  ], { shell: true });
   process.exit(status);
 }
 
 async function test() {
   await new Promise((resolve) => {
-    const p = child_process.spawn('npx', [
-      'mocha',
-      '-r', 'source-map-support/register',
-      '--timeout', '60000',
-      '--exit',
-      '--recursive',
-      'test/'
-    ], {
-      shell: true,
-    });
+    let p;
+    if (process.env.TESTS) {
+      p = child_process.spawn('npx', [
+        'nyc',
+        '--reporter=json',
+        '--clean=false',
+        'mocha',
+        '-r', 'source-map-support/register',
+        '--timeout', '120000',
+        '--grep="' + process.env.TESTS + '"',
+        '--exit',
+        '--recursive',
+        'test/',
+      ], { shell: true });
+    } else {
+      // run all default behavior
+      p = child_process.spawn('npx', [
+        'nyc',
+        '--reporter=json',
+        '--clean=false',
+        'mocha',
+        '-r', 'source-map-support/register',
+        '--timeout', '120000',
+        '--exit',
+        '--recursive',
+        'test/',
+      ], { shell: true });
+    }
 
     const report = fs.createWriteStream('report');
     p.stdout.on('data', (data) => {
@@ -93,7 +129,7 @@ async function test() {
       status = code;
       resolve();
     });
-  })
+  });
 
   if(status !== 0) {
     status = 0; // reset status for retest

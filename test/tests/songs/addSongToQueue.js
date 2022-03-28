@@ -1,28 +1,28 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-/* global describe it  */
-
-require('../../general.js');
-
-const db = require('../../general.js').db;
+/* global */
 const assert = require('assert');
-const message = require('../../general.js').message;
-const user = require('../../general.js').user;
-
-const songs = (require('../../../dest/systems/songs')).default;
 
 const { getRepository } = require('typeorm');
-const { SongRequest } = require('../../../dest/database/entity/song');
 
+const { SongRequest, SongPlaylist } = require('../../../dest/database/entity/song');
+const user = require('../../general.js').user;
+const db = require('../../general.js').db;
+const message = require('../../general.js').message;
 
-describe('Songs - addSongToQueue()', () => {
+let songs;
+describe('Songs - addSongToQueue() - @func1', () => {
+  before(() => {
+    songs = (require('../../../dest/systems/songs')).default;
+  });
   describe('Add music song by videoId', () => {
     before(async () => {
       await db.cleanup();
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = false;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
-    const videoId = 'hLQl3WQQoQ0';
+    const videoId = 'bmQwZhcZkbU';
 
     it(`Queue is empty`, async () => {
       const count = await getRepository(SongRequest).count();
@@ -31,7 +31,7 @@ describe('Songs - addSongToQueue()', () => {
 
     it(`Add music song ${videoId}`, async () => {
       const r = await songs.addSongToQueue({ parameters: videoId, sender: user.owner });
-      assert.strictEqual(r[0].response, '$sender, song Adele - Someone Like You (Official Music Video) was added to queue');
+      assert.strictEqual(r[0].response, '$sender, song The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover) was added to queue');
     });
 
     it(`Queue contains song`, async () => {
@@ -46,8 +46,9 @@ describe('Songs - addSongToQueue()', () => {
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = false;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
-    const videoUrl = 'https://www.youtube.com/watch?v=hLQl3WQQoQ0';
+    const videoUrl = 'https://www.youtube.com/watch?v=bmQwZhcZkbU';
 
     it(`Queue is empty`, async () => {
       const count = await getRepository(SongRequest).count();
@@ -56,7 +57,7 @@ describe('Songs - addSongToQueue()', () => {
 
     it(`Add music song ${videoUrl}`, async () => {
       const r = await songs.addSongToQueue({ parameters: videoUrl, sender: user.owner });
-      assert.strictEqual(r[0].response, '$sender, song Adele - Someone Like You (Official Music Video) was added to queue');
+      assert.strictEqual(r[0].response, '$sender, song The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover) was added to queue');
     });
 
     it(`Queue contains song`, async () => {
@@ -71,8 +72,9 @@ describe('Songs - addSongToQueue()', () => {
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = false;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
-    const videoSearch = 'Adele - Someone Like You (Official Music Video)';
+    const videoSearch = 'The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover)';
 
     it(`Queue is empty`, async () => {
       const count = await getRepository(SongRequest).count();
@@ -81,7 +83,7 @@ describe('Songs - addSongToQueue()', () => {
 
     it(`Add music song ${videoSearch}`, async () => {
       const r = await songs.addSongToQueue({ parameters: videoSearch, sender: user.owner });
-      assert.strictEqual(r[0].response, '$sender, song Adele - Someone Like You (Official Music Video) was added to queue');
+      assert.strictEqual(r[0].response, '$sender, song The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover) was added to queue');
     });
 
     it(`Queue contains song`, async () => {
@@ -96,8 +98,9 @@ describe('Songs - addSongToQueue()', () => {
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = true;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
-    const videoId = 'hLQl3WQQoQ0';
+    const videoId = 'bmQwZhcZkbU';
 
     it(`Queue is empty`, async () => {
       const count = await getRepository(SongRequest).count();
@@ -106,7 +109,7 @@ describe('Songs - addSongToQueue()', () => {
 
     it(`Add music song ${videoId}`, async () => {
       const r = await songs.addSongToQueue({ parameters: videoId, sender: user.owner });
-      assert.strictEqual(r[0].response, '$sender, song Adele - Someone Like You (Official Music Video) was added to queue');
+      assert.strictEqual(r[0].response, '$sender, song The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover) was added to queue');
     });
 
     it(`Queue contains song`, async () => {
@@ -121,8 +124,9 @@ describe('Songs - addSongToQueue()', () => {
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = true;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
-    const videoUrl = 'https://www.youtube.com/watch?v=hLQl3WQQoQ0';
+    const videoUrl = 'https://www.youtube.com/watch?v=bmQwZhcZkbU';
 
     it(`Queue is empty`, async () => {
       const count = await getRepository(SongRequest).count();
@@ -131,7 +135,7 @@ describe('Songs - addSongToQueue()', () => {
 
     it(`Add music song ${videoUrl}`, async () => {
       const r = await songs.addSongToQueue({ parameters: videoUrl, sender: user.owner });
-      assert.strictEqual(r[0].response, '$sender, song Adele - Someone Like You (Official Music Video) was added to queue');
+      assert.strictEqual(r[0].response, '$sender, song The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover) was added to queue');
     });
 
     it(`Queue contains song`, async () => {
@@ -146,8 +150,9 @@ describe('Songs - addSongToQueue()', () => {
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = true;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
-    const videoSearch = 'Adele - Someone Like You (Official Music Video)';
+    const videoSearch = 'The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover)';
 
     it(`Queue is empty`, async () => {
       const count = await getRepository(SongRequest).count();
@@ -156,7 +161,7 @@ describe('Songs - addSongToQueue()', () => {
 
     it(`Add music song ${videoSearch}`, async () => {
       const r = await songs.addSongToQueue({ parameters: videoSearch, sender: user.owner });
-      assert.strictEqual(r[0].response, '$sender, song Adele - Someone Like You (Official Music Video) was added to queue');
+      assert.strictEqual(r[0].response, '$sender, song The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover) was added to queue');
     });
 
     it(`Queue contains song`, async () => {
@@ -171,6 +176,7 @@ describe('Songs - addSongToQueue()', () => {
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = true;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
     const videoId = 'RwtZrI6HuwY';
 
@@ -196,6 +202,7 @@ describe('Songs - addSongToQueue()', () => {
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = true;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
     const videoUrl = 'https://www.youtube.com/watch?v=RwtZrI6HuwY';
 
@@ -221,6 +228,7 @@ describe('Songs - addSongToQueue()', () => {
       await message.prepare();
       await user.prepare();
       songs.onlyMusicCategory = true;
+      songs.allowRequestsOnlyFromPlaylist = false;
     });
     const videoSearch = 'Annoying customers after closing time - In and Out';
 
@@ -237,6 +245,83 @@ describe('Songs - addSongToQueue()', () => {
     it(`Queue is empty`, async () => {
       const count = await getRepository(SongRequest).count();
       assert(count === 0);
+    });
+  });
+
+  describe('Add music song by videoId', () => {
+    before(async () => {
+      await db.cleanup();
+      await message.prepare();
+      await user.prepare();
+      songs.onlyMusicCategory = false;
+      songs.allowRequestsOnlyFromPlaylist = false;
+    });
+    const videoId = 'bmQwZhcZkbU';
+
+    it(`Queue is empty`, async () => {
+      const count = await getRepository(SongRequest).count();
+      assert(count === 0);
+    });
+
+    it(`Add music song ${videoId}`, async () => {
+      const r = await songs.addSongToQueue({ parameters: videoId, sender: user.owner });
+      assert.strictEqual(r[0].response, '$sender, song The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover) was added to queue');
+    });
+
+    it(`Queue contains song`, async () => {
+      const count = await getRepository(SongRequest).count();
+      assert(count === 1);
+    });
+  });
+
+  describe('Add music song by url - allowRequestsOnlyFromPlaylist', () => {
+    before(async () => {
+      await db.cleanup();
+      await message.prepare();
+      await user.prepare();
+      songs.onlyMusicCategory = false;
+      songs.allowRequestsOnlyFromPlaylist = true;
+    });
+    const videoUrl = 'https://www.youtube.com/watch?v=bmQwZhcZkbU';
+
+    it(`Queue is empty`, async () => {
+      const count = await getRepository(SongRequest).count();
+      assert(count === 0);
+    });
+
+    it(`Add songs to playlist`, async () => {
+      await getRepository(SongPlaylist).save({
+        videoId:   'bmQwZhcZkbU',
+        seed:      0,
+        title:     'test',
+        loudness:  0,
+        length:    0,
+        volume:    0,
+        startTime: 0,
+        endTime:   0,
+        tags:      ['general', 'lorem'],
+      });
+      await getRepository(SongPlaylist).save({
+        videoId:   'RwtZrI6HuwY',
+        seed:      0,
+        endTime:   0,
+        startTime: 0,
+        volume:    0,
+        length:    0,
+        title:     'test2',
+        loudness:  0,
+        tags:      ['lorem'],
+      });
+    });
+
+    it(`Add song bmQwZhcZkbU from playlist`, async () => {
+      const r = await songs.addSongToQueue({ parameters: 'bmQwZhcZkbU', sender: user.owner });
+      assert.strictEqual(r[0].response, '$sender, song The Witcher 3 - Steel for Humans / Lazare (Gingertail Cover) was added to queue');
+    });
+
+    it(`Add song RwtZrI6HuwY without playlist`, async () => {
+      const r = await songs.addSongToQueue({ parameters: 'RwtZrI6HuwY', sender: user.owner });
+      assert.strictEqual(r[0].response, 'Sorry, $sender, but this song is not in current playlist');
     });
   });
 });

@@ -1,10 +1,13 @@
 {
   "settings": {
     "theme": "Default theme",
-    "domain": "Domain",
+    "domain": {
+      "title": "Domain",
+      "help": "Format without http/https: yourdomain.com or your.domain.com"
+    },
     "percentage": "Percentage difference for stats",
     "shortennumbers": "Short format of numbers",
-    "stickystats": "Stick stats to top",
-    "showdiff": "Show difference"
+    "showdiff": "Show difference",
+    "enablePublicPage": "Enable public page"
   }
 }

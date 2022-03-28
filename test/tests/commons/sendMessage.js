@@ -1,24 +1,23 @@
-/* global describe it before */
+/* global */
+
+const assert = require('assert');
 
 require('../../general.js');
-
+const { getOwnerAsSender } = require('../../../dest/helpers/commons/getOwnerAsSender');
+const { sendMessage } = require('../../../dest/helpers/commons/sendMessage');
+const emitter = require('../../../dest/helpers/interfaceEmitter').default;
 const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 
-const tmi = (require('../../../dest/tmi')).default;
-const assert = require('assert');
-
-const { sendMessage, getOwnerAsSender } = require('../../../dest/commons');
-
-describe('lib/commons - sendMessage()', () => {
+describe('lib/commons - @func2 - sendMessage()', () => {
   describe('remove /me when in color mode', () => {
     before(async () => {
       await db.cleanup();
       await message.prepare();
     });
 
-    it('enable color-mode', () => {
-      tmi.sendWithMe = true;
+    it('enable color-mode', async () => {
+      emitter.emit('set', '/services/twitch', 'sendWithMe', true);
     });
 
     it('send message containing /me', () => {
@@ -36,8 +35,8 @@ describe('lib/commons - sendMessage()', () => {
       await message.prepare();
     });
 
-    it('enable normal-mode', () => {
-      tmi.sendWithMe = false;
+    it('enable normal-mode', async () => {
+      emitter.emit('set', '/services/twitch', 'sendWithMe', false);
     });
 
     it('send message containing /me', () => {

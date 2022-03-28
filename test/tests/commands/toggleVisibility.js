@@ -2,15 +2,14 @@
 require('../../general.js');
 const assert = require('assert');
 
+const customcommands = (require('../../../dest/systems/customcommands')).default;
 const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 
-const customcommands = (require('../../../dest/systems/customcommands')).default;
-
 // users
-const owner = { username: 'soge__' };
+const owner = { userName: '__broadcaster__' };
 
-describe('Custom Commands - toggleVisibility()', () => {
+describe('Custom Commands - @func1 - toggleVisibility()', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();
@@ -18,11 +17,11 @@ describe('Custom Commands - toggleVisibility()', () => {
 
   it('', async () => {
     const r = await customcommands.toggleVisibility({ sender: owner, parameters: '' });
-    assert.strictEqual(r[0].response, 'Sorry, $sender, but this command is not correct, use !commands');
+    assert.strictEqual(r[0].response, 'Sorry, $sender, but this command is not correct, use !command');
   });
 
   it('!unknown', async () => {
-    const r = await customcommands.toggleVisibility({ sender: owner, parameters: '-c !unknown' });
+    const r = await customcommands.toggleVisibility({ sender: owner, parameters: '!unknown' });
     assert.strictEqual(r[0].response, '$sender, command !unknown was not found in database');
   });
 

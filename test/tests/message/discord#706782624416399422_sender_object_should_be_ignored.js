@@ -4,10 +4,11 @@ const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 const time = require('../../general.js').time;
 
-const api = (require('../../../dest/api')).default;
+const isStreamOnline = (require('../../../dest/helpers/api/isStreamOnline')).isStreamOnline;
 const alias = (require('../../../dest/systems/alias')).default;
 const customcommands = (require('../../../dest/systems/customcommands')).default;
 const timers = (require('../../../dest/systems/timers')).default;
+const check = (require('../../../dest/watchers')).check;
 
 const { getRepository } = require('typeorm');
 const { Timer, TimerResponse } = require('../../../dest/database/entity/timer');
@@ -15,9 +16,9 @@ const { Timer, TimerResponse } = require('../../../dest/database/entity/timer');
 const { linesParsed } = require('../../../dest/helpers/parser');
 
 // users
-const owner = { username: 'soge__' };
+const owner = { userName: '__broadcaster__' };
 
-describe('Message - https://discordapp.com/channels/317348946144002050/619437014001123338/706782624416399422 - sender object should be owner on timers with (!#)', () => {
+describe('Message - https://discordapp.com/channels/317348946144002050/619437014001123338/706782624416399422 - sender object should be owner on timers with (!#) - @func3', () => {
   before(async () => {
     await db.cleanup();
     await message.prepare();
@@ -39,12 +40,13 @@ describe('Message - https://discordapp.com/channels/317348946144002050/619437014
     });
     for (let i = 0; i < 5; i++) {
       await time.waitMs(1000);
-      api.isStreamOnline = true;
+      isStreamOnline.value = true;
+      await check();
       await timers.check();
     }
   });
 
   it('!top time should be properly triggered', async () => {
-    await message.isSentRaw('Top 10 (watch time): no data available', 'bot', 20000);
+    await message.isSentRaw('Top 10 (watch time): no data available', '__bot__', 20000);
   });
 });

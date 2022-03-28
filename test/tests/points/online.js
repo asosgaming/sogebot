@@ -11,18 +11,18 @@ const { User } = require('../../../dest/database/entity/user');
 
 const points = (require('../../../dest/systems/points')).default;
 
-const owner = { userId: Math.floor(Math.random() * 100000), username: 'soge__' };
-const user1 = { userId: Math.floor(Math.random() * 100000), username: 'user1', points: 100 };
-const user2 = { userId: Math.floor(Math.random() * 100000), username: 'user2' };
+const owner = { userId: String(Math.floor(Math.random() * 100000)), userName: '__broadcaster__' };
+const user1 = { userId: String(Math.floor(Math.random() * 100000)), userName: 'user1', points: 100 };
+const user2 = { userId: String(Math.floor(Math.random() * 100000)), userName: 'user2' };
 
 async function setUsersOnline(users) {
   await getRepository(User).update({}, { isOnline: false });
-  for (const username of users) {
-    await getRepository(User).update({ username }, { isOnline: true });
+  for (const userName of users) {
+    await getRepository(User).update({ userName }, { isOnline: true });
   }
 }
 
-describe('Points - online()', () => {
+describe('Points - online() - @func1', () => {
   before(async () => {
     await db.cleanup();
     await message.prepare();
@@ -34,12 +34,12 @@ describe('Points - online()', () => {
 
   describe('Points should be correctly given', () => {
     it('set users online', async () => {
-      await setUsersOnline(['soge__', 'user1', 'user2']);
+      await setUsersOnline(['__broadcaster__', 'user1', 'user2']);
     });
 
     it('!points get should return 0 for owner', async () => {
       const r = await points.get({ sender: owner, parameters: '' });
-      assert.strictEqual(r[0].response, `@soge__ has currently 0 points. Your position is 2/3.`);
+      assert.strictEqual(r[0].response, `@__broadcaster__ has currently 0 points. Your position is ?/3.`);
     });
 
     it('!points get should return 100 for user1', async () => {
@@ -59,7 +59,7 @@ describe('Points - online()', () => {
 
     it('!points get should return 100 for owner', async () => {
       const r = await points.get({ sender: owner, parameters: '' });
-      assert.strictEqual(r[0].response, `@soge__ has currently 100 points. Your position is 2/3.`);
+      assert.strictEqual(r[0].response, `@__broadcaster__ has currently 100 points. Your position is ?/3.`);
     });
 
     it('!points get should return 200 for user1', async () => {
@@ -79,7 +79,7 @@ describe('Points - online()', () => {
 
     it('!points get should return 0 for owner', async () => {
       const r = await points.get({ sender: owner, parameters: '' });
-      assert.strictEqual(r[0].response, `@soge__ has currently 0 points. Your position is 2/3.`);
+      assert.strictEqual(r[0].response, `@__broadcaster__ has currently 0 points. Your position is ?/3.`);
     });
 
     it('!points get should return 50 for user1', async () => {

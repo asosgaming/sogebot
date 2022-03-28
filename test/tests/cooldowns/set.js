@@ -3,13 +3,14 @@ require('../../general.js');
 
 const db = require('../../general.js').db;
 const message = require('../../general.js').message;
+const url = require('../../general.js').url;
 
 const cooldown = (require('../../../dest/systems/cooldown')).default;
 const assert = require('assert');
 // users
-const owner = { username: 'soge__' };
+const owner = { userName: '__broadcaster__' };
 
-describe('Cooldowns - set()', () => {
+describe('Cooldowns - set() - @func3', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();
@@ -17,17 +18,17 @@ describe('Cooldowns - set()', () => {
 
   it('', async () => {
     const r = await cooldown.main({ sender: owner, parameters: '' });
-    assert.strictEqual(r[0].response, 'Sorry, $sender, but this command is not correct, use !cooldown [keyword|!command] [global|user] [seconds] [true/false]');
+    assert.strictEqual(r[0].response, 'Usage => ' + url + '/systems/cooldowns');
   });
 
   it('!alias', async () => {
     const r = await cooldown.main({ sender: owner, parameters: '!alias' });
-    assert.strictEqual(r[0].response, 'Sorry, $sender, but this command is not correct, use !cooldown [keyword|!command] [global|user] [seconds] [true/false]');
+    assert.strictEqual(r[0].response, 'Usage => ' + url + '/systems/cooldowns');
   });
 
   it('alias', async () => {
     const r = await cooldown.main({ sender: owner, parameters: 'alias' });
-    assert.strictEqual(r[0].response, 'Sorry, $sender, but this command is not correct, use !cooldown [keyword|!command] [global|user] [seconds] [true/false]');
+    assert.strictEqual(r[0].response, 'Usage => ' + url + '/systems/cooldowns');
   });
 
   it('test global 20', async () => {
@@ -108,5 +109,15 @@ describe('Cooldowns - set()', () => {
   it('русский user 20 true', async () => {
     const r = await cooldown.main({ sender: owner, parameters: 'русский user 20 true' });
     assert.strictEqual(r[0].response, '$sender, user cooldown for русский was set to 20s');
+  });
+
+  it('unset OK', async () => {
+    const r = await cooldown.unset({ sender: owner, parameters: '!test' });
+    assert.strictEqual(r[0].response, '$sender, cooldown for !test was unset');
+  });
+
+  it('unset without param', async () => {
+    const r = await cooldown.unset({ sender: owner, parameters: '' });
+    assert.strictEqual(r[0].response, 'Usage => ' + url + '/systems/cooldowns');
   });
 });

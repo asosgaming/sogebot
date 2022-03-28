@@ -5,15 +5,15 @@ require('../../general.js');
 const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 
-const owner = { username: 'soge__', userId: Math.floor(Math.random() * 100000) };
-const someuser = { username: 'someuser', userId: Math.floor(Math.random() * 100000) };
+const owner = { userName: '__broadcaster__', userId: String(Math.floor(Math.random() * 100000)) };
+const someuser = { userName: 'someuser', userId: String(Math.floor(Math.random() * 100000)) };
 
 const { getRepository } = require('typeorm');
 const { User } = require('../../../dest/database/entity/user');
 
 const customcommands = (require('../../../dest/systems/customcommands')).default;
 
-describe('Message - $touser filter', async () => {
+describe('Message - $touser filter - @func3', async () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();
@@ -26,21 +26,21 @@ describe('Message - $touser filter', async () => {
 
   it('!point someuser', async () => {
     customcommands.run({ sender: owner, message: '!point someuser' });
-    await message.isSentRaw('@soge__ points to @someuser', owner);
+    await message.isSentRaw('@__broadcaster__ points to @someuser', owner);
   });
 
   it('!point @someuser', async () => {
     customcommands.run({ sender: owner, message: '!point @someuser' });
-    await message.isSentRaw('@soge__ points to @someuser', owner);
+    await message.isSentRaw('@__broadcaster__ points to @someuser', owner);
   });
 
   it('!point', async () => {
     customcommands.run({ sender: owner, message: '!point' });
-    await message.isSentRaw('@soge__ points to @soge__', owner);
+    await message.isSentRaw('@__broadcaster__ points to @__broadcaster__', owner);
   });
 
   it('!point @', async () => {
     customcommands.run({ sender: owner, message: '!point' });
-    await message.isSentRaw('@soge__ points to @soge__', owner);
+    await message.isSentRaw('@__broadcaster__ points to @__broadcaster__', owner);
   });
 });

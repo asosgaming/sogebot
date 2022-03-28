@@ -1,5 +1,19 @@
 {
   "enabled": "Aktiviert",
+  "testDlg": {
+    "alertTester": "Alert Tester",
+    "command": "Befehl",
+    "username": "Benutzername",
+    "recipient": "Empfänger",
+    "message": "Nachricht",
+    "tier": "Stufe",
+    "amountOfViewers": "Anzahl der Zuschauer",
+    "amountOfBits": "Anzahl der Bits",
+    "amountOfGifts": "Anzahl der Geschenke",
+    "amountOfMonths": "Anzahl der Monate",
+    "amountOfTips": "Trinkgeld",
+    "event": "Ereignis"
+  },
   "empty": "Die Alert-Registry ist leer, erstelle einen neuen Alert.",
   "emptyAfterSearch": "Alert Registry leer! Bei der Suche nach \"<strong>$search</strong>\" wurden keine Alerts gefunden",
   "revertcode": "Auf Standard zurücksetzen",
@@ -8,7 +22,13 @@
     "placeholder": "Namen des Alerts festlegen"
   },
   "alertDelayInMs": {
-    "name": "Alarm-Verzögerung"
+    "name": "Alert Verzögerung"
+  },
+  "parryEnabled": {
+    "name": "Alert parries"
+  },
+  "parryDelay": {
+    "name": "Alert parry delay"
   },
   "profanityFilterType": {
     "name": "Schimpfwort-Filter",
@@ -32,7 +52,9 @@
     "subcommunitygifts": "SubGifts an Community",
     "tips": "Tips",
     "hosts": "Hosts",
-    "raids": "Raids"
+    "raids": "Raids",
+    "cmdredeems": "Befehl wird eingelöst",
+    "rewardredeems": "Belohnungen einlösen"
   },
   "title": {
     "name": "Variantenname",
@@ -40,6 +62,28 @@
   },
   "variant": {
     "name": "Variantenvorkommen"
+  },
+  "filter": {
+    "name": "Auftretender Filter",
+    "operator": "Operator",
+    "rule": "Regel",
+    "addRule": "Neue Regel",
+    "addGroup": "Neue Gruppe",
+    "comparator": "Vergleicher",
+    "value": "Wert",
+    "valueSplitByComma": "Werte durch Komma getrennt (z.B. val1, val2)",
+    "isEven": "ist gleich",
+    "isOdd": "ist ungerade",
+    "lessThan": "kleiner als",
+    "lessThanOrEqual": "kleiner oder gleich",
+    "contain": "enthält",
+    "equal": "ist gleich",
+    "notEqual": "ungleich",
+    "present": "ist vorhanden",
+    "includes": "enthält",
+    "greaterThan": "größer als",
+    "greaterThanOrEqual": "größer als oder gleich",
+    "noFilter": "kein filter"
   },
   "speed": {
     "name": "Geschwindigkeit"
@@ -53,18 +97,33 @@
   "random": "Zufällig",
   "exact-amount": "Genauer Betrag",
   "greater-than-or-equal-to-amount": "Größer als oder gleich dem Betrag",
+  "tier-exact-amount": "Stufe ist",
+  "tier-greater-than-or-equal-to-amount": "Stufe ist höher oder gleich",
+  "months-exact-amount": "Anzahl der Monate ist exakt",
+  "months-greater-than-or-equal-to-amount": "Anzahl der Monate ist höher oder gleich",
+  "gifts-exact-amount": "Gif Subs betrage ist gleich",
+  "gifts-greater-than-or-equal-to-amount": "Gif Subs betrage ist höher oder gleich",
   "very-rarely": "Sehr selten",
   "rarely": "Selten",
   "default": "Standard",
   "frequently": "Häufig",
   "very-frequently": "Sehr häufig",
+  "exclusive": "Exklusiv",
   "messageTemplate": {
     "name": "Nachrichtenvorlage",
     "placeholder": "Nachrichtenvorlage festlegen",
-    "help": "Verfügbare Variablen: {name}, {amount} (cheers, subs, tips, subgifts, sub community gifts), {recipient} (subgifts), {monthsName} (subs, subgifts), {currency} (tips)"
+    "help": "Verfügbare Variablen: {name}, {amount} (Grüße, Subs, Tipps, Subgeschenke, Sub Community Geschenke, Befehlseinlöse), {recipient} (Subgeschenke, Befehlseinlöse), {monthsName} (Subgeschenke, Subgeschenke), {currency} (Tipps)"
+  },
+  "ttsTemplate": {
+    "name": "TTS Vorlage",
+    "placeholder": "TTS-Vorlage festlegen",
+    "help": "Verfügbare Variablen: {name}, {amount} {monthsName} {currency} {message}"
   },
   "animationText": {
     "name": "Animationstext"
+  },
+  "animationType": {
+    "name": "Type of animation"
   },
   "animationIn": {
     "name": "Eingehende Animation"
@@ -73,27 +132,48 @@
     "name": "Ausgehende Animation"
   },
   "alertDurationInMs": {
-    "name": "Dauer des Alarms"
+    "name": "Dauer des Alerts"
   },
   "alertTextDelayInMs": {
-    "name": "Verzögerung des Alarmtextes"
+    "name": "Verzögerung des Alert Textes"
   },
   "layoutPicker": {
     "name": "Layout"
   },
+  "loop": {
+    "name": "In Schleife abspielen"
+  },
+  "scale": {
+    "name": "Skalieren"
+  },
+  "translateY": {
+    "name": "Nach oben / +Runter"
+  },
+  "translateX": {
+    "name": "Bewege -links / +Rechts"
+  },
   "image": {
-    "name": "Bild"
+    "name": "Bild / Video(.webm)",
+    "setting": "Bild / Video(.webm) Einstellungen"
   },
   "sound": {
-    "name": "Sound"
+    "name": "Sound",
+    "setting": "Sound-Einstellungen"
   },
   "soundVolume": {
-    "name": "Sound Lautstärke"
+    "name": "Alert Lautstärke"
   },
   "enableAdvancedMode": "Erweiterten Modus aktivieren",
   "font": {
     "setting": "Schrifteinstellungen",
     "name": "Schriftartfamilie",
+    "overrideGlobal": "Globale Schriftarteinstellungen überschreiben",
+    "align": {
+      "name": "Ausrichtung",
+      "left": "Links",
+      "center": "Mitte",
+      "right": "Rechts"
+    },
     "size": {
       "name": "Schriftgröße"
     },
@@ -125,7 +205,6 @@
   "message": {
     "setting": "Nachrichteneinstellungen"
   },
-  "showAutoHost": "Zeige Auto-Host",
   "voice": "Stimme",
   "keepAlertShown": "Alert bleibt während TTS sichtbar",
   "skipUrls": "URLs in TTS überspringen",

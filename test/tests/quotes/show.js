@@ -13,8 +13,8 @@ const { User } = require('../../../dest/database/entity/user');
 const quotes = (require('../../../dest/systems/quotes')).default;
 
 // users
-const owner = { username: 'soge__', userId: '1' };
-const user = { username: 'user', userId: '3' };
+const owner = { userName: '__broadcaster__', userId: '1' };
+const user = { userName: 'user', userId: '3' };
 
 const tests = [
   { sender: owner, parameters: '', shouldFail: true, error: 'systems.quotes.show.error.no-parameters' },
@@ -33,15 +33,15 @@ const tests = [
   { sender: owner, parameters: '-tag general', id: 1, tag: 'general', shouldFail: false, exist: false },
 ];
 
-describe('Quotes - main()', () => {
+describe('Quotes - main() - @func3', () => {
   for (const test of tests) {
     let id, r;
     describe(test.parameters, async () => {
       before(async () => {
         await db.cleanup();
         await message.prepare();
-        await getRepository(User).save({ username: user.username, userId: user.userId });
-        await getRepository(User).save({ username: owner.username, userId: owner.userId });
+        await getRepository(User).save({ userName: user.userName, userId: user.userId });
+        await getRepository(User).save({ userName: owner.userName, userId: owner.userId });
         const quote = await quotes.add({ sender: test.sender, parameters: '-tags lorem ipsum -quote Lorem Ipsum', command: '!quote add' });
         id = quote[0].id;
         if (test.id === 1) {
@@ -60,7 +60,7 @@ describe('Quotes - main()', () => {
       } else {
         if (test.exist) {
           it('Should show quote', async () => {
-            assert.strictEqual(r[0].response, `Quote ${id} by soge__ 'Lorem Ipsum'`);
+            assert.strictEqual(r[0].response, `Quote ${id} by __broadcaster__ 'Lorem Ipsum'`);
           });
         } else {
           it('Should sent not-found message', async () => {

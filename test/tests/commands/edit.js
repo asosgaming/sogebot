@@ -8,13 +8,13 @@ const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 
 const customcommands = (require('../../../dest/systems/customcommands')).default;
-const { permission } = require('../../../dest/helpers/permissions');
+const { defaultPermissions } = require('../../../dest/helpers/permissions/');
 
 const { getRepository } = require('typeorm');
 const { User } = require('../../../dest/database/entity/user');
 
 // users
-const owner = { username: 'soge__', userId: Math.floor(Math.random() * 100000) };
+const owner = { userName: '__broadcaster__', userId: String(Math.floor(Math.random() * 100000)) };
 
 const parseFailedTests = [
   { permission: null, command: null, rid: null, response: null },
@@ -28,16 +28,16 @@ const parseFailedTests = [
 ];
 
 const unknownCommandTests = [
-  { permission: permission.VIEWERS, command: '!cmd', rid: '1', response: 'Lorem Ipsum Dolor Sit Amet' },
+  { permission: defaultPermissions.VIEWERS, command: '!cmd', rid: '1', response: 'Lorem Ipsum Dolor Sit Amet' },
 ];
 
 const unknownResponseTests = [
-  { permission: permission.VIEWERS, command: '!cmd', rid: '2', response: 'Lorem Ipsum Dolor Sit Amet' },
+  { permission: defaultPermissions.VIEWERS, command: '!cmd', rid: '2', response: 'Lorem Ipsum Dolor Sit Amet' },
 ];
 
 const successTests = [
   { permission: null, command: '!cmd', rid: '1', response: 'Lorem Ipsum', edit: 'Dolor Ipsum'},
-  { permission: permission.VIEWERS, command: '!cmd', rid: '1', response: 'Lorem Ipsum', edit: 'Dolor Ipsum'},
+  { permission: defaultPermissions.VIEWERS, command: '!cmd', rid: '1', response: 'Lorem Ipsum', edit: 'Dolor Ipsum'},
   { permission: 'casters', command: '!cmd', rid: '1', response: 'Lorem Ipsum', edit: 'Dolor Ipsum'},
   { permission: null, command: '!한글', rid: '1', response: 'Lorem Ipsum', edit: 'Dolor Ipsum'},
   { permission: null, command: '!русский', rid: '1', response: 'Lorem Ipsum', edit: 'Dolor Ipsum'},
@@ -51,19 +51,19 @@ function generateCommand(opts) {
   return [p, c, r, rid].join(' ');
 }
 
-describe('Custom Commands - edit()', () => {
+describe('Custom Commands - @func1 - edit()', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();
 
-    await getRepository(User).save({ username: owner.username, userId: owner.userId });
+    await getRepository(User).save({ userName: owner.userName, userId: owner.userId });
   });
 
   describe('Expected parsed fail', () => {
     for (const t of parseFailedTests) {
       it(generateCommand(t), async () => {
         const r = await customcommands.edit({ sender: owner, parameters: generateCommand(t) });
-        assert.strictEqual(r[0].response, 'Sorry, $sender, but this command is not correct, use !commands');
+        assert.strictEqual(r[0].response, 'Sorry, $sender, but this command is not correct, use !command');
       });
     }
   });

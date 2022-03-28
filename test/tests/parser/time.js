@@ -9,12 +9,12 @@ const assert = require('assert');
 
 const Parser = require('../../../dest/parser').default;
 
-const owner = { username: 'soge__', userId: Math.floor(Math.random() * 100000) };
+const owner = { userName: '__broadcaster__', userId: String(Math.floor(Math.random() * 100000)) };
 
 const { getRepository } = require('typeorm');
 const { User } = require('../../../dest/database/entity/user');
 
-describe('Parser - parse time check', async () => {
+describe('Parser - parse time check - @func2', async () => {
   const tests = [
     {
       test: '!me',
@@ -28,7 +28,7 @@ describe('Parser - parse time check', async () => {
         await db.cleanup();
         await message.prepare();
 
-        await getRepository(User).save({ username: owner.username, userId: owner.userId });
+        await getRepository(User).save({ userName: owner.userName, userId: owner.userId });
       });
 
       let time;

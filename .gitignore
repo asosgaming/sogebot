@@ -7,9 +7,9 @@ yarn.lock
 *.zip
 db/
 *.db
+*.db*
 report
 tsconfig.tsbuildinfo
-sogebot.db*
 restart.pid
 .env
 
@@ -20,4 +20,15 @@ public/dist/js
 public/dist/css/dark.css
 public/dist/css/light.css
 public/*.html
+<<<<<<< HEAD
 New_Dockerfile
+=======
+sogeBot-master/
+coverage/
+.nyc_output
+
+src/.cache/
+
+locales/*
+!locales/en*
+>>>>>>> f4319510b65b494c411028d931efde68353f660d

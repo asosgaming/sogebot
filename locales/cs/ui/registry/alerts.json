@@ -1,5 +1,19 @@
 {
   "enabled": "Status",
+  "testDlg": {
+    "alertTester": "Tester upozornění",
+    "command": "Příkaz",
+    "username": "Uživatelské jméno",
+    "recipient": "Příjemce",
+    "message": "Zpráva",
+    "tier": "Tier",
+    "amountOfViewers": "Počet diváků",
+    "amountOfBits": "Počet bitů",
+    "amountOfGifts": "Počet obdarovaných",
+    "amountOfMonths": "Počet měsíců",
+    "amountOfTips": "Spropitné",
+    "event": "Událost"
+  },
   "empty": "Registr alertů je prázdný, vytvořte nový.",
   "emptyAfterSearch": "Registr alertů je prázdný při hledání \"<strong>$search</strong>\"",
   "revertcode": "Vrátit kód do výchozího stavu",
@@ -9,6 +23,12 @@
   },
   "alertDelayInMs": {
     "name": "Zpoždění alertů"
+  },
+  "parryEnabled": {
+    "name": "Parírování alertů"
+  },
+  "parryDelay": {
+    "name": "Zpoždění parírování alertu"
   },
   "profanityFilterType": {
     "name": "Filtr vulgarit",
@@ -32,7 +52,9 @@
     "subcommunitygifts": "Darování subscribe komunitě",
     "tips": "Spropitné",
     "hosts": "Hostování",
-    "raids": "Raidy"
+    "raids": "Raidy",
+    "cmdredeems": "Koupené příkazy",
+    "rewardredeems": "Odměna vyplacena"
   },
   "title": {
     "name": "Název varianty",
@@ -40,6 +62,28 @@
   },
   "variant": {
     "name": "Výskyt varianty"
+  },
+  "filter": {
+    "name": "Filtr výskytu",
+    "operator": "Operátor",
+    "rule": "Pravidlo",
+    "addRule": "Přidat pravidlo",
+    "addGroup": "Přidat skupinu",
+    "comparator": "Porovnání",
+    "value": "Hodnota",
+    "valueSplitByComma": "Hodnoty rozdělené čárkou (např. val1, val2)",
+    "isEven": "je sudé",
+    "isOdd": "je liché",
+    "lessThan": "menší než",
+    "lessThanOrEqual": "menší nebo rovno",
+    "contain": "obsahuje",
+    "equal": "rovná se",
+    "notEqual": "nerovná se",
+    "present": "je přítomen",
+    "includes": "zahrnuje",
+    "greaterThan": "větší než",
+    "greaterThanOrEqual": "větší nebo rovno",
+    "noFilter": "žádný filtr"
   },
   "speed": {
     "name": "Rychlost"
@@ -53,18 +97,33 @@
   "random": "Náhodně",
   "exact-amount": "Přesný počet",
   "greater-than-or-equal-to-amount": "Více nebo stejně jako počet",
+  "tier-exact-amount": "Tier je přesně",
+  "tier-greater-than-or-equal-to-amount": "Tier je vyšší nebo roven",
+  "months-exact-amount": "Počet měsíců je přesně",
+  "months-greater-than-or-equal-to-amount": "Počet měsíců je vyšší nebo rovno",
+  "gifts-exact-amount": "Počet obdarovaných je přesně",
+  "gifts-greater-than-or-equal-to-amount": "Počet obdarovaných je vyšší nebo roven",
   "very-rarely": "Velmi zřídka",
   "rarely": "Zřídka",
   "default": "Normálně",
   "frequently": "Často",
   "very-frequently": "Velmi často",
+  "exclusive": "Výhradní",
   "messageTemplate": {
     "name": "Šablona zprávy",
     "placeholder": "Zadejte svou šablonu zprávy",
-    "help": "Dostupné proměnné: {name}, {amount} (cheers, subs, tips, subgifts, sub community gifts), {recipient} (subgifts), {monthsName} (subs, subgifts), {currency} (tips)"
+    "help": "Dostupné proměnné: {name}, {amount} (bits, subs, tips, subgifts, sub community gifts, command redeems), {recipient} (subgifts, command redeems), {monthsName} (subs, subgifts), {currency} (tips)"
+  },
+  "ttsTemplate": {
+    "name": "TTS šablona",
+    "placeholder": "Nastavte si šablonu TTS",
+    "help": "Dostupné proměnné: {name}, {amount} {monthsName} {currency} {message}"
   },
   "animationText": {
     "name": "Animace textu"
+  },
+  "animationType": {
+    "name": "Typ animace"
   },
   "animationIn": {
     "name": "Vstupní animace"
@@ -81,19 +140,40 @@
   "layoutPicker": {
     "name": "Rozvržení"
   },
+  "loop": {
+    "name": "Přehrát ve smyčce"
+  },
+  "scale": {
+    "name": "Měřítko"
+  },
+  "translateY": {
+    "name": "Posunout -nahoru / +dolů"
+  },
+  "translateX": {
+    "name": "Posunout -vlevo / +vpravo"
+  },
   "image": {
-    "name": "Obrázek"
+    "name": "Obrázek / Video(.webm)",
+    "setting": "Nastavení obrázku / videa (.webm)"
   },
   "sound": {
-    "name": "Zvuk"
+    "name": "Zvuk",
+    "setting": "Nastavení zvuku"
   },
   "soundVolume": {
-    "name": "Hlasitost zvuku"
+    "name": "Hlasitost upozornění"
   },
   "enableAdvancedMode": "Zapnout pokročilý mód",
   "font": {
     "setting": "Nastavení fontu",
     "name": "Font",
+    "overrideGlobal": "Přepsat globální nastavení písma",
+    "align": {
+      "name": "Zarovnání",
+      "left": "Vlevo",
+      "center": "Uprostřed",
+      "right": "Vpravo"
+    },
     "size": {
       "name": "Velikost fontu"
     },
@@ -125,7 +205,6 @@
   "message": {
     "setting": "Nastavení zprávy"
   },
-  "showAutoHost": "Zobrazit autohost",
   "voice": "Hlas",
   "keepAlertShown": "Alert zůstane zobrazen během TTS",
   "skipUrls": "Přeskočit URL během TTS",

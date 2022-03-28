@@ -1,29 +1,32 @@
-/* global describe it */
+/* global */
 require('../../general.js');
 
-const db = require('../../general.js').db;
-const msg = require('../../general.js').message;
-const Message = require('../../../dest/message').default;
 const assert = require('assert');
-const { prepare } = require('../../../dest/commons');
 
-const owner = { userId: Math.floor(Math.random() * 100000), username: 'soge__' };
-const ignoredUser = { userId: Math.floor(Math.random() * 100000), username: 'ignoreduser' };
-const user = { userId: Math.floor(Math.random() * 100000), username: 'user1' };
+const owner = { userId: String(Math.floor(Math.random() * 100000)), userName: '__broadcaster__' };
+const ignoredUser = { userId: String(Math.floor(Math.random() * 100000)), userName: 'ignoreduser' };
+const user = { userId: String(Math.floor(Math.random() * 100000)), userName: 'user1' };
 
 const { getRepository } = require('typeorm');
-const { User } = require('../../../dest/database/entity/user');
 
-const tmi = (require('../../../dest/tmi')).default;
+const { User } = require('../../../dest/database/entity/user');
+const { prepare } = require('../../../dest/helpers/commons/prepare');
+const Message = require('../../../dest/message').default;
+const db = require('../../general.js').db;
+const msg = require('../../general.js').message;
 
 async function setUsersOnline(users) {
   await getRepository(User).update({}, { isOnline: false });
-  for (const username of users) {
-    await getRepository(User).update({ username }, { isOnline: true });
+  for (const userName of users) {
+    await getRepository(User).update({ userName }, { isOnline: true });
   }
 }
 
-describe('Message - random filter', () => {
+let twitch;
+describe('Message - random filter - @func3', () => {
+  before(() => {
+    twitch = require('../../../dest/services/twitch.js').default;
+  });
   describe('(random.online.viewer) should exclude ignored user', () => {
     before(async () => {
       await db.cleanup();
@@ -33,13 +36,13 @@ describe('Message - random filter', () => {
       await getRepository(User).save(ignoredUser);
       await getRepository(User).save(user);
 
-      const r = await tmi.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { userName: 'ignoreduser' }));
     });
 
     it('add user ignoreduser to ignore list', async () => {
-      const r = await tmi.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { userName: 'ignoreduser' }));
     });
 
     it('From 100 randoms ignoreduser shouldn\'t be picked', async () => {
@@ -60,25 +63,26 @@ describe('Message - random filter', () => {
       await getRepository(User).save(ignoredUser);
       await getRepository(User).save(user);
 
-      const r = await tmi.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { userName: 'ignoreduser' }));
     });
     it('add user ignoreduser to ignore list', async () => {
-      const r = await tmi.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { userName: 'ignoreduser' }));
+
     });
 
     const users = ['ignoreduser', 'user1'];
-    for (const username of users) {
-      it('add user ' + username + ' to users list', async () => {
-        await getRepository(User).save({ userId: Math.floor(Math.random() * 100000), username, isFollower: true });
+    for (const userName of users) {
+      it('add user ' + userName + ' to users list', async () => {
+        await getRepository(User).save({ userId: String(Math.floor(Math.random() * 100000)), userName, isFollower: true });
       });
     }
 
     it('From 100 randoms ignoreduser shouldn\'t be picked', async () => {
       for (let i = 0; i < 100; i++) {
         await setUsersOnline(['ignoreduser', 'user1']);
-        const message = await new Message('(random.online.follower)').parse({ sender: owner});
+        const message = await new Message('(random.online.follower)').parse({ sender: owner });
         assert.notEqual(message, 'ignoreduser');
       }
     });
@@ -93,25 +97,25 @@ describe('Message - random filter', () => {
       await getRepository(User).save(ignoredUser);
       await getRepository(User).save(user);
 
-      const r = await tmi.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { userName: 'ignoreduser' }));
     });
     it('add user ignoreduser to ignore list', async () => {
-      const r = await tmi.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { userName: 'ignoreduser' }));
     });
 
     const users = ['ignoreduser', 'user1'];
-    for (const username of users) {
-      it('add user ' + username + ' to users list', async () => {
-        await getRepository(User).save({ userId: Math.floor(Math.random() * 100000), username, isSubscriber: true });
+    for (const userName of users) {
+      it('add user ' + userName + ' to users list', async () => {
+        await getRepository(User).save({ userId: String(Math.floor(Math.random() * 100000)), userName, isSubscriber: true });
       });
     }
 
     it('From 100 randoms ignoreduser shouldn\'t be picked', async () => {
       for (let i = 0; i < 100; i++) {
         await setUsersOnline(['ignoreduser', 'user1']);
-        const message = await new Message('(random.online.subscriber)').parse({ sender: owner});
+        const message = await new Message('(random.online.subscriber)').parse({ sender: owner });
         assert.notEqual(message, 'ignoreduser');
       }
     });
@@ -126,25 +130,25 @@ describe('Message - random filter', () => {
       await getRepository(User).save(ignoredUser);
       await getRepository(User).save(user);
 
-      const r = await tmi.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { userName: 'ignoreduser' }));
     });
 
     it('add user ignoreduser to ignore list', async () => {
-      const r = await tmi.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { userName: 'ignoreduser' }));
     });
 
     const users = ['ignoreduser', 'user1'];
-    for (const username of users) {
-      it('add user ' + username + ' to users list', async () => {
-        await getRepository(User).save({ userId: Math.floor(Math.random() * 100000), username });
+    for (const userName of users) {
+      it('add user ' + userName + ' to users list', async () => {
+        await getRepository(User).save({ userId: String(Math.floor(Math.random() * 100000)), userName });
       });
     }
 
     it('From 100 randoms ignoreduser shouldn\'t be picked', async () => {
       for (let i = 0; i < 100; i++) {
-        const message = await new Message('(random.viewer)').parse({ sender: owner});
+        const message = await new Message('(random.viewer)').parse({ sender: owner });
         assert.notEqual(message, 'ignoreduser');
       }
     });
@@ -159,24 +163,24 @@ describe('Message - random filter', () => {
       await getRepository(User).save(ignoredUser);
       await getRepository(User).save(user);
 
-      const r = await tmi.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { userName: 'ignoreduser' }));
     });
     it('add user ignoreduser to ignore list', async () => {
-      const r = await tmi.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { userName: 'ignoreduser' }));
     });
 
     const users = ['ignoreduser', 'user1'];
-    for (const username of users) {
-      it('add user ' + username + ' to users list', async () => {
-        await getRepository(User).save({ userId: Math.floor(Math.random() * 100000), username, isFollower: true });
+    for (const userName of users) {
+      it('add user ' + userName + ' to users list', async () => {
+        await getRepository(User).save({ userId: String(Math.floor(Math.random() * 100000)), userName, isFollower: true });
       });
     }
 
     it('From 100 randoms ignoreduser shouldn\'t be picked', async () => {
       for (let i = 0; i < 100; i++) {
-        const message = await new Message('(random.follower)').parse({ sender: owner});
+        const message = await new Message('(random.follower)').parse({ sender: owner });
         assert.notEqual(message, 'ignoreduser');
       }
     });
@@ -191,24 +195,24 @@ describe('Message - random filter', () => {
       await getRepository(User).save(ignoredUser);
       await getRepository(User).save(user);
 
-      const r = await tmi.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreRm({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.removed', { userName: 'ignoreduser' }));
     });
     it('add user ignoreduser to ignore list', async () => {
-      const r = await tmi.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
-      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { username: 'ignoreduser' }));
+      const r = await twitch.ignoreAdd({ sender: owner, parameters: 'ignoreduser' });
+      assert.strictEqual(r[0].response, prepare('ignore.user.is.added', { userName: 'ignoreduser' }));
     });
 
     const users = ['ignoreduser', 'user1'];
-    for (const username of users) {
-      it('add user ' + username + ' to users list', async () => {
-        await getRepository(User).save({ userId: Math.floor(Math.random() * 100000), username, isSubscriber: true });
+    for (const userName of users) {
+      it('add user ' + userName + ' to users list', async () => {
+        await getRepository(User).save({ userId: String(Math.floor(Math.random() * 100000)), userName, isSubscriber: true });
       });
     }
 
     it('From 100 randoms ignoreduser shouldn\'t be picked', async () => {
       for (let i = 0; i < 100; i++) {
-        const message = await new Message('(random.subscriber)').parse({ sender: owner});
+        const message = await new Message('(random.subscriber)').parse({ sender: owner });
         assert.notEqual(message, 'ignoreduser');
       }
     });

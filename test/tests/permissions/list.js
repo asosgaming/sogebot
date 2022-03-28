@@ -5,14 +5,14 @@ require('../../general.js');
 const db = require('../../general.js').db;
 const message = require('../../general.js').message;
 const assert = require('assert');
-const { prepare } = require('../../../dest/commons');
+const { prepare } = require('../../../dest/helpers/commons/prepare');
 
 const permissions = (require('../../../dest/permissions')).default;
 
 // users
-const owner = { username: 'soge__' };
+const owner = { userName: '__broadcaster__' };
 
-describe('Permissions - list()', () => {
+describe('Permissions - list() - @func3', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();

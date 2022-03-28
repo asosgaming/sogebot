@@ -2,23 +2,31 @@
 require('../../general.js');
 
 const assert = require('assert');
-const _ = require('lodash');
 
+const _ = require('lodash');
+const { getRepository } = require('typeorm');
+
+const { User } = require('../../../dest/database/entity/user');
+const cooldown = (require('../../../dest/systems/cooldown')).default;
 const db = require('../../general.js').db;
 const message = require('../../general.js').message;
-
-const { getRepository } = require('typeorm');
-const { User } = require('../../../dest/database/entity/user');
-
-const cooldown = (require('../../../dest/systems/cooldown')).default;
+const url = require('../../general.js').url;
 
 // users
-const owner = { userId: Math.floor(Math.random() * 100000), badges: {}, username: 'soge__' };
-const follower = { badges: {}, username: 'follower', userId: Number(_.random(999999, false)), isFollower: true };
-const commonUser = { badges: {}, username: 'user1', userId: Number(_.random(999999, false)) };
-const commonUser2 = { badges: {}, username: 'user2', userId: Number(_.random(999999, false)) };
+const owner = {
+  userId: String(Math.floor(Math.random() * 100000)), badges: {}, userName: '__broadcaster__',
+};
+const follower = {
+  badges: {}, userName: 'follower', userId: String(_.random(999999, false)), isFollower: true,
+};
+const commonUser = {
+  badges: {}, userName: 'user1', userId: String(_.random(999999, false)),
+};
+const commonUser2 = {
+  badges: {}, userName: 'user2', userId: String(_.random(999999, false)),
+};
 
-describe('Cooldowns - toggleFollowers()', () => {
+describe('Cooldowns - toggleFollowers() - @func3', () => {
   beforeEach(async () => {
     await db.cleanup();
     await message.prepare();
@@ -33,7 +41,7 @@ describe('Cooldowns - toggleFollowers()', () => {
     const r2 = await cooldown.toggleFollowers({ sender: owner, parameters: command });
 
     assert.strictEqual(r[0].response, '$sender, user cooldown for !me was set to 60s');
-    assert.strictEqual(r2[0].response, 'Sorry, $sender, but this command is not correct, use !cooldown [keyword|!command] [global|user] [seconds] [true/false]');
+    assert.strictEqual(r2[0].response, 'Usage => ' + url + '/systems/cooldowns');
   });
 
   it('correct toggle - follower user', async () => {

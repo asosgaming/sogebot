@@ -1,57 +1,67 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 const assert = require('assert');
-const until = require('test-until');
+const util = require('util');
+
 const chalk = require('chalk');
-const sinon = require('sinon');
 const _ = require('lodash');
-const { prepare } = require('../../dest/commons');
+const sinon = require('sinon');
+const until = require('test-until');
 
 let eventSpy;
 
 const log = require('../../dest/helpers/log');
-const events = (require('../../dest/events')).default
-const tmi = (require('../../dest/tmi')).default
-
 
 module.exports = {
   prepare: function () {
+    const eventEmitter = (require('../../dest/helpers/events/emitter')).eventEmitter;
+    const tmi = (require('../../dest/services/twitch/chat')).default;
+
     log.debug('test', chalk.bgRed('*** Restoring all spies ***'));
 
     if (eventSpy) {
       eventSpy.restore();
     }
-    eventSpy = sinon.spy(events, 'fire');
+    eventSpy = sinon.spy(eventEmitter, 'emit');
 
     tmi.client = {
       bot: {
-        chat: {
-          say: function () { },
-          color: function () {},
-          timeout: function () {},
-          on: function () {},
-          connect: function () {},
-          join: function () {},
-        },
+        say:           function () {},
+        deleteMessage: function() {},
+        color:         function () {},
+        timeout:       function () {},
+        on:            function () {},
+        connect:       function () {},
+        join:          function () {},
+        part:          function () {},
       },
       broadcaster: {
-        chat: {
-          say: function () { },
-          color: function () {},
-          timeout: function () {},
-          on: function () {},
-          connect: function () {},
-          join: function () {},
-        },
+        say:           function () {},
+        deleteMessage: function() {},
+        color:         function () {},
+        timeout:       function () {},
+        on:            function () {},
+        connect:       function () {},
+        join:          function () {},
+        part:          function () {},
       },
     };
 
     try {
       sinon.stub(log, 'chatOut');
+    } catch (e) {
+      log.chatOut.reset();
+    }
+
+    try {
       sinon.stub(log, 'warning');
+    } catch (e) {
+      log.warning.reset();
+    }
+
+    try {
       sinon.spy(log, 'debug'); // spy because we want to have debug messages printed
     } catch (e) {
       log.chatOut.reset();
-      log.warning.reset();
-      log.debug.resetHistory();
     }
   },
   debug: async function (category, expected, waitMs = 5000) {
@@ -69,22 +79,51 @@ module.exports = {
       }
       return setError(
         '\n+\t"' + expected + '"'
-        + '\n-\t\t"' + log.debug.args.join('\n\t\t\t') + '"'
+        + '\n-\t\t"' + log.debug.args.join('\n\t\t\t') + '"',
       );
     }, waitMs);
   },
+  isWarnedRaw: async function (entry, user, opts) {
+    opts = opts || {};
+    await until(async setError => {
+      let expected = [];
+      if (_.isArray(opts)) {
+        for (let i = 0; i < opts.length; i++) {
+          expected.push(entry);
+        }
+      } else {
+        expected = [entry];
+      }
+      try {
+        let isCorrectlyCalled = false;
+        for (const e of expected) {
+          if (log.warning.calledWith(e)) {
+            isCorrectlyCalled = true;
+            break;
+          }
+        }
+        assert(isCorrectlyCalled);
+        log.warning.reset();
+        return true;
+      } catch (err) {
+        return setError(
+          '\nExpected message:\t"' + JSON.stringify(expected) + '"\nActual message:\t"' + (!_.isNil(log.warning.lastCall) ? log.warning.lastCall.args[0] : '') + '"');
+      }
+    }, 5000);
+  },
   isWarned: async function (entry, user, opts) {
+    const { prepare } = require('../../dest/helpers/commons/prepare');
     user = _.cloneDeep(user);
     opts = opts || {};
     await until(async setError => {
       let expected = [];
       if (_.isArray(opts)) {
         for (const o of opts) {
-          o.sender = _.isNil(user.username) ? '' : user.username;
+          o.sender = _.isNil(user.userName) ? '' : user.userName;
           expected.push(prepare(entry, o));
         }
       } else {
-        opts.sender = _.isNil(user.username) ? '' : user.username;
+        opts.sender = _.isNil(user.userName) ? '' : user.userName;
         expected = [prepare(entry, opts)];
       }
       try {
@@ -104,10 +143,11 @@ module.exports = {
       }
     }, 5000);
   },
-  isSent: async function (entry, user, opts, wait) {
+  isSent: util.deprecate(async function (entry, user, opts, wait) {
+    const { prepare } = require('../../dest/helpers/commons/prepare');
     if (typeof user === 'string') {
       user = {
-        username: user,
+        userName: user,
       };
     }
     user = _.cloneDeep(user);
@@ -116,7 +156,7 @@ module.exports = {
       const expected = [];
       if (_.isArray(opts)) {
         for (const o of opts) {
-          o.sender = _.isNil(user.username) ? '' : user.username;
+          o.sender = _.isNil(user.userName) ? '' : user.userName;
           if (_.isArray(entry)) {
             for (const e of entry) {
               expected.push(prepare(e, o));
@@ -126,7 +166,7 @@ module.exports = {
           }
         }
       } else {
-        opts.sender = _.isNil(user.username) ? '' : user.username;
+        opts.sender = _.isNil(user.userName) ? '' : user.userName;
         if (_.isArray(entry)) {
           for (const e of entry) {
             expected.push(prepare(e, opts));
@@ -142,8 +182,8 @@ module.exports = {
             setError('Missing translations! ' + e);
             return false;
           }
-          if (user.username) {
-            e += ` [${user.username}]`;
+          if (user.userName) {
+            e += ` [${user.userName}]`;
           }
           /*
           console.dir(log.chatOut.args, { depth: null })
@@ -159,7 +199,35 @@ module.exports = {
       } catch (err) {
         return setError(
           '\nExpected message:\t"' + expected + '"'
-          + '\nActual message:\t\t"' + log.chatOut.args.join('\n\t\t\t') + '"'
+          + '\nActual message:\t\t"' + log.chatOut.args.join('\n\t\t\t') + '"',
+        );
+      }
+    }, wait || 5000);
+  }, 'We should not use isSent as it may cause false positive tests'),
+  sentMessageContain: async function (expected, wait) {
+    if (!Array.isArray(expected)) {
+      expected = [expected];
+    }
+    return until(setError => {
+      try {
+        let isOK = false;
+        for (const e of expected) {
+          if (isOK) {
+            break;
+          }
+          for (const args of log.chatOut.args) {
+            if (args[0].includes(e)) {
+              isOK = true;
+              break;
+            }
+          }
+        }
+        assert(isOK);
+        return true;
+      } catch (err) {
+        return setError(
+          '\nExpected message to contain:\t' + expected
+          + '\nActual message:\t\t' + log.chatOut.args.join('\n\t\t\t'),
         );
       }
     }, wait || 5000);
@@ -170,16 +238,19 @@ module.exports = {
     }
     if (typeof user === 'string') {
       user = {
-        username: user,
+        userName: user,
       };
+    }
+    if (!user) {
+      user = { userName: '__bot__' };
     }
     user = _.cloneDeep(user);
     return until(setError => {
       try {
         let isOK = false;
         for (let e of expected) {
-          if (user.username) {
-            e += ` [${user.username}]`;
+          if (user.userName) {
+            e += ` [${user.userName}]`;
           }
           if (log.chatOut.calledWith(e)) {
             isOK = true;
@@ -190,8 +261,8 @@ module.exports = {
         return true;
       } catch (err) {
         return setError(
-          '\nExpected message:\t' + expected + ` [${user.username}]`
-          + '\nActual message:\t\t' + log.chatOut.args.join('\n\t\t\t')
+          '\nExpected message:\t' + expected + ` [${user.userName}]`
+          + '\nActual message:\t\t' + log.chatOut.args.join('\n\t\t\t'),
         );
       }
     }, wait || 5000);
@@ -199,7 +270,7 @@ module.exports = {
   isNotSent: async function (expected, user, wait) {
     if (typeof user === 'string') {
       user = {
-        username: user,
+        userName: user,
       };
     }
     user = _.cloneDeep(user);
@@ -214,7 +285,7 @@ module.exports = {
   isNotSentRaw: async function (expected, user, wait) {
     if (typeof user === 'string') {
       user = {
-        username: user,
+        userName: user,
       };
     }
     user = _.cloneDeep(user);

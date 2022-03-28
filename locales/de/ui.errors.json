@@ -8,6 +8,13 @@
   "something_went_wrong": "Irgend etwas ist schief gelaufen",
   "permission_must_exist": "Berechtigung muss vorhanden sein",
   "minValue_of_value_is": "Minimalster Wert ist $value",
+  "value_cannot_be": "Wert darf nicht $value sein.",
   "invalid_format": "Ungültiges Werte Format.",
-  "invalid_regexp_format": "Dies ist kein gültiger oder regulärer Ausdruck."
+  "invalid_regexp_format": "Dies ist kein gültiger oder regulärer Ausdruck.",
+  "owner_and_broadcaster_oauth_is_not_set": "Besitzer und Kanal oauth ist nicht gesetzt",
+  "channel_is_not_set": "Kanal ist nicht festgelegt",
+  "please_set_your_broadcaster_oauth_or_owners": "Bitte stellen Sie Ihre <a href=\"#/settings/modules/services/twitch\">Streamer oauth oder Eigentümer ein</a>, oder alle Nutzer <strong>werden Zugriff</strong> zu diesem Dashboard haben und werden als <strong>Brodecaster</strong> gesehen.",
+  "new_update_available": "Neue Aktualisierung verfügbar",
+  "new_bot_version_available_at": "New bot version {version} available at <a href=\"https://github.com/sogebot/sogeBot/releases/tag/{version}\">GitHub</a>.",
+  "one_of_inputs_must_be_set": "Eine der Eingaben muss gesetzt werden"
 }

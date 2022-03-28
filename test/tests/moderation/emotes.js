@@ -1,18 +1,18 @@
 /* global describe it before */
 
+const assert = require('assert');
 
 require('../../general.js');
 
+const moderation = (require('../../../dest/systems/moderation')).default;
 const db = require('../../general.js').db;
 const variable = require('../../general.js').variable;
 const message = require('../../general.js').message;
 const user = require('../../general.js').user;
-const assert = require('assert');
+const time = require('../../general.js').time;
 
-const moderation = (require('../../../dest/systems/moderation')).default;
-
-describe('systems/moderation - Emotes()', () => {
-  const cEmotesEmojisAreEmotes = { message: '😀 😁 😂 🤣 😃 😄 😅 😆 😉 😊 😋 😎 😍 😘 😗 😙 😚 🙂 🤗 🤩 🤔 🤨 😐 😑 😶 🙄 😏 😣 😥 😮 🤐 😯 😪 😫 😴 😌 😛 😜 😝 🤤 😒 😓 😔 😕 🙃 🤑 😲 ☹️ 🙁 😖 😞 😟 😤 😢 😭 😦 😧 😨 😩 🤯 😬 😰 😱', sender: user.viewer};
+describe('systems/moderation - Emotes() - @func2', () => {
+  const cEmotesEmojisAreEmotes = { message: '😀 😁 😂 🤣 😃 😄 😅 😆 😉 😊 😋 😎 😍 😘 😗 😙 😚 🙂 🤗 🤩 🤔 🤨 😐 😑 😶 🙄 😏 😣 😥 😮 🤐 😯 😪 😫 😴 😌 😛 😜 😝 🤤 😒 😓 😔 😕 🙃 🤑 😲 ☹️ 🙁 😖 😞 😟 😤 😢 😭 😦 😧 😨 😩 🤯 😬 😰 😱', sender: user.viewer };
 
   describe('cEmotesEmojisAreEmotes=false', async () => {
     before(async () => {
@@ -23,7 +23,7 @@ describe('systems/moderation - Emotes()', () => {
     });
 
     it(`message '${cEmotesEmojisAreEmotes.message}' should not timeout`, async () => {
-      assert(await moderation.emotes({ sender: cEmotesEmojisAreEmotes.sender, message: cEmotesEmojisAreEmotes.message }));
+      assert(await moderation.emotes({ emotesOffsets: new Map(), sender: cEmotesEmojisAreEmotes.sender, message: cEmotesEmojisAreEmotes.message }));
     });
   });
 
@@ -36,7 +36,38 @@ describe('systems/moderation - Emotes()', () => {
     });
 
     it(`message '${cEmotesEmojisAreEmotes.message}' should timeout`, async () => {
-      assert(!(await moderation.emotes({ sender: cEmotesEmojisAreEmotes.sender, message: cEmotesEmojisAreEmotes.message })));
+      assert(!(await moderation.emotes({ emotesOffsets: new Map(), sender: cEmotesEmojisAreEmotes.sender, message: cEmotesEmojisAreEmotes.message })));
+    });
+  });
+
+  describe('immune user', async () => {
+    before(async () => {
+      await db.cleanup();
+      await message.prepare();
+      await user.prepare();
+      moderation.cEmotesEmojisAreEmotes = true;
+      moderation.cEmotesEnabled = true;
+    });
+
+    it(`'${cEmotesEmojisAreEmotes.message}' should timeout`, async () => {
+      assert(!(await moderation.emotes({ emotesOffsets: new Map(), sender: user.viewer, message: cEmotesEmojisAreEmotes.message })));
+    });
+
+    it(`add user immunity`, async () => {
+      const r = await moderation.immune({ parameters: `${user.viewer.userName} emotes 5s` });
+      assert(r[0].response === '$sender, user @__viewer__ have emotes immunity for 5 seconds');
+    });
+
+    it(`'${cEmotesEmojisAreEmotes.message}' should not timeout`, async () => {
+      assert((await moderation.emotes({ emotesOffsets: new Map(), sender: user.viewer, message: cEmotesEmojisAreEmotes.message })));
+    });
+
+    it(`wait 10 seconds`, async () => {
+      await time.waitMs(10000);
+    });
+
+    it(`'${cEmotesEmojisAreEmotes.message}' should timeout`, async () => {
+      assert(!(await moderation.emotes({ emotesOffsets: new Map(), sender: user.viewer, message: cEmotesEmojisAreEmotes.message })));
     });
   });
 });

@@ -1,5 +1,19 @@
 {
   "enabled": "Включено",
+  "testDlg": {
+    "alertTester": "Тестер оповещений",
+    "command": "Команды",
+    "username": "Имя пользователя",
+    "recipient": "Получатели",
+    "message": "Сообщение",
+    "tier": "Tier",
+    "amountOfViewers": "Amount of viewers",
+    "amountOfBits": "Amount of bits",
+    "amountOfGifts": "Amount of gifts",
+    "amountOfMonths": "Amount of months",
+    "amountOfTips": "Донаты",
+    "event": "Событие"
+  },
   "empty": "Список оповещений пуст, создайте новые оповещения.",
   "emptyAfterSearch": "Реестр оповещений пуст при поиске \"<strong>$search</strong>\"",
   "revertcode": "Сбросить к заводским настройкам",
@@ -8,6 +22,12 @@
     "placeholder": "Введите название ваших оповещений"
   },
   "alertDelayInMs": {
+    "name": "Задержка оповещения"
+  },
+  "parryEnabled": {
+    "name": "Оповещения"
+  },
+  "parryDelay": {
     "name": "Задержка оповещения"
   },
   "profanityFilterType": {
@@ -32,7 +52,9 @@
     "subcommunitygifts": "Сабподарки для сообщества",
     "tips": "Донаты",
     "hosts": "Хосты",
-    "raids": "Рейды"
+    "raids": "Рейды",
+    "cmdredeems": "Command Redeems",
+    "rewardredeems": "Reward Redeems"
   },
   "title": {
     "name": "Название варианта",
@@ -40,6 +62,28 @@
   },
   "variant": {
     "name": "Вариант применения"
+  },
+  "filter": {
+    "name": "Occurence filter",
+    "operator": "Оператор",
+    "rule": "Правила",
+    "addRule": "Добавить правило",
+    "addGroup": "Добавить группу",
+    "comparator": "Comparator",
+    "value": "Значение",
+    "valueSplitByComma": "Значения, разделенные запятыми (например, val1, val2)",
+    "isEven": "is even",
+    "isOdd": "is odd",
+    "lessThan": "less than",
+    "lessThanOrEqual": "Меньше чем или равно",
+    "contain": "содержит",
+    "equal": "equal",
+    "notEqual": "not equal",
+    "present": "is present",
+    "includes": "Включает",
+    "greaterThan": "greater than",
+    "greaterThanOrEqual": "Больше или равно",
+    "noFilter": "без фильтра"
   },
   "speed": {
     "name": "Скорость"
@@ -53,18 +97,33 @@
   "random": "Случайный",
   "exact-amount": "Точное количество",
   "greater-than-or-equal-to-amount": "Больший чем или равный",
+  "tier-exact-amount": "Tier is exactly",
+  "tier-greater-than-or-equal-to-amount": "Tier is higher or equal to",
+  "months-exact-amount": "Months amount is exactly",
+  "months-greater-than-or-equal-to-amount": "Months amount is higher or equal to",
+  "gifts-exact-amount": "Gifts amount is exactly",
+  "gifts-greater-than-or-equal-to-amount": "Gifts amount is higher or equal to",
   "very-rarely": "Очень редкие",
   "rarely": "Редко",
   "default": "По умолчанию",
   "frequently": "Периодически",
   "very-frequently": "Очень часто",
+  "exclusive": "Exclusive",
   "messageTemplate": {
     "name": "Шаблон сообщения",
     "placeholder": "Установить шаблон сообщения",
-    "help": "Доступные переменные: {name}, {amount} (cheers, subs, tips, subgifts, sub community gifts), {recipient} (subgifts), {monthsName} (subs, subgifts), {currency} (tips)"
+    "help": "Available variables: {name}, {amount} (cheers, subs, tips, subgifts, sub community gifts, command redeems), {recipient} (subgifts, command redeems), {monthsName} (subs, subgifts), {currency} (tips)"
+  },
+  "ttsTemplate": {
+    "name": "Шаблон TTS",
+    "placeholder": "Установить шаблон TTS",
+    "help": "Доступные переменные: {name}, {amount} {monthsName} {currency} {message}"
   },
   "animationText": {
     "name": "Текст анимации"
+  },
+  "animationType": {
+    "name": "Тип анимации"
   },
   "animationIn": {
     "name": "Анимация в"
@@ -81,19 +140,40 @@
   "layoutPicker": {
     "name": "Размещение"
   },
+  "loop": {
+    "name": "Играть на цикле"
+  },
+  "scale": {
+    "name": "Масштаб"
+  },
+  "translateY": {
+    "name": "Переместить -вверх / +вниз"
+  },
+  "translateX": {
+    "name": "Переместить -влево / +вправо"
+  },
   "image": {
-    "name": "Изображение"
+    "name": "Изображение / Видео (.webm)",
+    "setting": "Настройки изображения / видео (.webm)"
   },
   "sound": {
-    "name": "Звук"
+    "name": "Звук",
+    "setting": "Настройки звука"
   },
   "soundVolume": {
-    "name": "Громкость звука"
+    "name": "Громкость оповещений"
   },
   "enableAdvancedMode": "Включить расширенный режим",
   "font": {
     "setting": "Настройки шрифта",
     "name": "Семейство шрифтов",
+    "overrideGlobal": "Переопределить общие настройки шрифта",
+    "align": {
+      "name": "Расположение",
+      "left": "Слева",
+      "center": "По центру",
+      "right": "Справа"
+    },
     "size": {
       "name": "Размер шрифта"
     },
@@ -125,7 +205,6 @@
   "message": {
     "setting": "Настройки сообщения"
   },
-  "showAutoHost": "Показывать автохост",
   "voice": "Голос",
   "keepAlertShown": "Оповещение сохраняет видимость во время TTS",
   "skipUrls": "Не озвучивать ссылки в TTS",

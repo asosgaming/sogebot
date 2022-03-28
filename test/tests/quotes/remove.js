@@ -14,7 +14,7 @@ const { Quotes } = require('../../../dest/database/entity/quotes');
 const quotes = (require('../../../dest/systems/quotes')).default;
 
 // users
-const owner = { username: 'soge__', userId: 1 };
+const owner = { userName: '__broadcaster__', userId: 1 };
 
 
 const tests = [
@@ -25,7 +25,7 @@ const tests = [
   { sender: owner, parameters: '-id $id', id: 1, shouldFail: false, exist: true },
 ];
 
-describe('Quotes - remove()', () => {
+describe('Quotes - remove() - @func3', () => {
   for (const test of tests) {
     let responses = [];
     describe(test.parameters, async () => {

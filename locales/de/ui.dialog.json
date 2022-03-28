@@ -4,26 +4,26 @@
     "add": "Hinzufügen"
   },
   "position": {
-    "settings": "Position settings",
-    "anchorX": "Anchor X position",
-    "anchorY": "Anchor Y position",
-    "left": "Left",
-    "right": "Right",
-    "middle": "Middle",
-    "top": "Top",
-    "bottom": "Bottom",
+    "settings": "Positionseinstellungen",
+    "anchorX": "Cursor X-Position",
+    "anchorY": "Cursor Y-Position",
+    "left": "Links",
+    "right": "Rechts",
+    "middle": "Mitte",
+    "top": "Oben",
+    "bottom": "Unten",
     "x": "X",
     "y": "Y"
   },
   "font": {
-    "shadowShiftRight": "Shift Right",
-    "shadowShiftDown": "Shift Down",
-    "shadowBlur": "Blur",
-    "shadowOpacity": "Opacity",
-    "color": "Color"
+    "shadowShiftRight": "Nach rechts verschieben",
+    "shadowShiftDown": "Nach unten verschieben",
+    "shadowBlur": "Unscharf",
+    "shadowOpacity": "Deckkraft",
+    "color": "Farbe"
   },
   "errors": {
-    "required": "Diese Eingabe darf nicht leer sein.",
+    "required": "Dieser Wert darf nicht leer sein.",
     "minValue": "Der niedrigste Wert dieser Eingabe ist $value."
   },
   "buttons": {
@@ -55,9 +55,14 @@
     "edit": "Bearbeiten",
     "delete": "Löschen",
     "play": "Abspielen",
+    "stop": "Stop",
     "hold-to-delete": "Halten zum Löschen",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "permission": "Berechtigung",
+    "group": "Gruppe",
+    "visibility": "Sichtbarkeit",
+    "reset": "Zurücksetzen"
   },
   "changesPending": "Deine Änderungen wurden nicht gespeichert.",
   "formNotValid": "Formular ist ungültig.",

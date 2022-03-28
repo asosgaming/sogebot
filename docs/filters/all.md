@@ -4,6 +4,9 @@
 
 `$sender` - returns username of viewer, who triggered this message
 
+`$source` - returns source of this message (twitch or discord), if comes from
+bot it is twitch by default
+
 `$price` - returns command price
 
 `$game` - return current game
@@ -16,8 +19,6 @@
 
 `$views` - return current views count
 
-`$hosts` - return current hosts count
-
 `$followers` - return current followers count
 
 `$subscribers` - return current subscribers count
@@ -28,9 +29,15 @@
 
 `$spotifySong` - return current song playing in Spotify
 
+`$lastfmSong` - return current song playing in Last.fm
+
 `$latestFollower` - Latest Follower
 
 `$latestSubscriber` - Latest Subscriber
+
+`$latestSubscriberMonths` - Latest Subscriber cumulative months
+
+`$latestSubscriberStreak` - Latest Subscriber months streak
 
 `$latestTipAmount` - Latest Tip (amount)
 
@@ -64,6 +71,27 @@
 
 `$version` - return current bot version
 
+`$isBotSubscriber` - return true/false (boolean) if bot is subscriber
+
+`$isStreamOnline` - return true/false (boolean) if stream is online
+
+## Count subs / follows/ bits / tips in date interval
+
+- `(count|subs|<interval>)` - return subs+resubs count in interval
+  - **example:**
+    - `(count|subs|day)`
+- `(count|follows|<interval>)` - return follows count in interval
+  - **example:**
+    - `(count|follows|month)`
+- `(count|tips|<interval>)` - return tips count in interval
+  - **example:**
+    - `(count|tips|year)`
+- `(count|bits|<interval>)` - return bits count in interval
+  - **example:**
+    - `(count|bits|week)`
+
+- available **interval**: hour, day, week, month, year
+
 ## Eval
 `(eval <yourJScode>)` - will evaluate your javascript code - there **must** be return value
 
@@ -75,15 +103,29 @@
 `(if $viewers>5|Is more than 5 viewers)` - will evaluate your javascript if code, without else
 
 ## Online/offline filters
+
 `(onlineonly)` - will enable command only if stream is online
 
 `(offlineonly)` - will enable command only if stream is offline
 
-## Math filter
-`(math.#)` - solve a math problem
+## Math filters
+
+- `(math.#)` - solve a math problem
   - **example:**
     - `(math.5+6)`
     - `(math.$bits*2)` - usable with variables in events
+- `(toPercent.#)` - change float number to percent
+  - **example:**
+    - `(toPercent|2|0.5)` => 50.00
+    - `(toPercent|0.5)` => 50
+    - `(toPercent|0.4321)` => 43
+    - `(toPercent|2|0.43211123)` => 43.21
+- `(toFloat.#)` - formats a number using fixed-point notation.
+  - **example:**
+    - `(toFloat|2|0.5)` => 0.50
+    - `(toFloat|0.5)` => 1
+    - `(toFloat|2|0.43211123)` => 0.43
+    - `(toFloat|0.4321)` => 0
 
 ## Random filters
 `(random.online.viewer)` - returns random online viewer
@@ -211,6 +253,7 @@ e.g. `(api|https://httpbin.org/get?test=a\\nb) Lorem (api.args.test)`
 `(!!<command>)` - run command **silently**
 
 **Usage 1:**
+
 - _command:_ `!buypermit`
 - _response:_ `(!permit.sender) You have bought a 1 link permit for (price)`
 - _chat:_ `foobar: !buypermit`
@@ -218,6 +261,7 @@ e.g. `(api|https://httpbin.org/get?test=a\\nb) Lorem (api.args.test)`
 - Bot will then send permit command for sender `!permit foobar` with *muted* permit message
 
 **Usage 2:**
+
 - _command:_ `!play`
 - _response:_ `(!songrequest.J73cZQzhPW0) You just requested some song!`
 - _chat:_ `foobar: !play`
@@ -225,13 +269,25 @@ e.g. `(api|https://httpbin.org/get?test=a\\nb) Lorem (api.args.test)`
 - Bot will then send songrequest command for id `!songrequest J73cZQzhPW0` with *muted* songrequest message
 
 ## Stream filters
+
 `(stream|#name|game)` - returns game of `#name` channel, it something went wrong, returns `n/a`
 
 `(stream|#name|title)` - returns title of `#name` channel, it something went wrong, returns `n/a`
 
 `(stream|#name|viewers)` - returns viewers count of `#name` channel, it something went wrong, returns `0`
 
+`(stream|#name|link)` - returns link to twitch `#name` channel -> 'twitch.tv/#name'
+
+## YouTube filters
+
+`$youtube(url, <channel-or-user>)` - returns latest video link e.g.
+`$youtube(url, stejk01)`
+
+`$youtube(title, <channel-or-user>)` - returns latest video title e.g.
+`$youtube(title, stejk01)`
+
 ## List filters
+
 `(list.alias)` - will return list of your visible aliases
 
 `(list.alias|<group>)` - will return list of your visible aliases for group

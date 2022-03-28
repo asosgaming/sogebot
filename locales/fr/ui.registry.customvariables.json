@@ -24,7 +24,7 @@
     "help": "Variable name must be unique, e.g. $_wins, $_loses, $_top3",
     "placeholder": "Enter your unique variable name",
     "error": {
-      "isNotUnique": "Variable must have <strong>unique</strong> name.",
+      "isNotUnique": "Variable must have unique name.",
       "isEmpty": "Variable name must not be empty."
     }
   },
@@ -62,7 +62,7 @@
     "name": "Test current script",
     "help": "Click <strong>Test current script</strong> to see value in <strong>Current value</strong> input"
   },
-  "history": "History",
+  "history": "Historique",
   "historyIsEmpty": "History for this variable is empty!",
   "warning": "<strong>Warning:</strong> All data of this variable will be discarded!",
   "choose": "Choose...",
@@ -74,9 +74,9 @@
   },
   "runEvery": {
     "isUsed": "When variable is used",
-    "seconds": "Seconds",
+    "seconds": "Secondes",
     "minutes": "Minutes",
-    "hours": "Hours",
+    "hours": "Heures",
     "days": "Days"
   }
 }

@@ -1,11 +1,11 @@
 {
   "settings": {
-    "cDisplayTheme": "Theme",
-    "cDisplayHideAfterInactivity": "Hide on inactivity",
-    "cDisplayAlign": "Align",
+    "cDisplayTheme": "Thème",
+    "cDisplayHideAfterInactivity": "Masquer en cas d'inactivité",
+    "cDisplayAlign": "Aligner",
     "cDisplayInactivityTime": {
-      "title": "Inactivity after",
-      "help": "in miliseconds"
+      "title": "Inactif après",
+      "help": "en millisecondes"
     }
   }
 }
